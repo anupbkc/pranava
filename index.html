@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pranava — Meditation & Breathwork Timer</title>
+<meta name="theme-color" content="#14102a">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <div class="om">ॐ</div>
+  <h1>PRANAVA</h1>
+  <p class="tag">meditation · breathwork</p>
+</header>
+
+<nav id="tabs">
+  <button data-view="meditate" class="active">Meditate</button>
+  <button data-view="breathe">Breathe</button>
+  <button data-view="library">Library</button>
+</nav>
+
+<main>
+
+  <!-- ————— MEDITATE ————— -->
+  <section id="view-meditate" class="view active">
+    <div class="flower-wrap">
+      <div class="flower pulse" id="flower-med"></div>
+      <div class="flower-center">
+        <span id="med-dur-label">15</span><small id="med-dur-unit">min</small>
+      </div>
+    </div>
+
+    <div class="chips" id="dur-chips"></div>
+
+    <div class="card opts">
+      <label class="row">
+        <span>Opening sound</span>
+        <select id="sel-start"></select>
+      </label>
+      <label class="row">
+        <span>Interval bell</span>
+        <select id="sel-int">
+          <option value="0">Off</option>
+          <option value="1">Every 1 min</option>
+          <option value="2">Every 2 min</option>
+          <option value="5">Every 5 min</option>
+          <option value="10">Every 10 min</option>
+          <option value="15">Every 15 min</option>
+        </select>
+      </label>
+      <label class="row">
+        <span>Interval sound</span>
+        <select id="sel-int-sound"></select>
+      </label>
+      <label class="row">
+        <span>Closing sound</span>
+        <select id="sel-end"></select>
+      </label>
+      <label class="row">
+        <span>Ambience</span>
+        <select id="sel-amb"></select>
+      </label>
+      <label class="row">
+        <span>Ambience volume</span>
+        <input type="range" id="rng-amb" min="0" max="1" step="0.05">
+      </label>
+    </div>
+
+    <button class="begin" id="begin-med">Begin</button>
+  </section>
+
+  <!-- ————— BREATHE ————— -->
+  <section id="view-breathe" class="view">
+    <div class="flower-wrap sm">
+      <div class="flower" id="flower-b"></div>
+      <div class="flower-center"><span id="b-preset-label">·</span></div>
+    </div>
+
+    <div id="preset-list" class="preset-list"></div>
+
+    <div class="card opts">
+      <div class="row">
+        <span>Session length</span>
+        <div class="chips inline" id="b-dur-chips"></div>
+      </div>
+      <label class="row">
+        <span>Sound cues</span>
+        <input type="checkbox" id="chk-cues">
+      </label>
+      <label class="row">
+        <span>Voice guide</span>
+        <input type="checkbox" id="chk-voice">
+      </label>
+      <label class="row">
+        <span>Ambience</span>
+        <select id="sel-amb-b"></select>
+      </label>
+    </div>
+
+    <button class="ghost" id="open-builder">✎ Create custom pattern</button>
+
+    <div class="card" id="builder" hidden>
+      <h3 id="builder-title">Custom pattern</h3>
+      <div id="builder-rows"></div>
+      <button class="ghost sm-btn" id="add-phase">+ Add phase</button>
+      <div class="row">
+        <input type="text" id="builder-name" placeholder="Pattern name" maxlength="30">
+        <button class="ghost sm-btn" id="save-pattern">Save</button>
+        <button class="ghost sm-btn" id="close-builder">Cancel</button>
+      </div>
+    </div>
+
+    <button class="begin" id="begin-breath">Begin</button>
+  </section>
+
+  <!-- ————— LIBRARY ————— -->
+  <section id="view-library" class="view">
+    <div class="card">
+      <h3>Bells & bowls <small>· synthesized live, no files</small></h3>
+      <div class="sound-grid" id="bell-grid"></div>
+    </div>
+    <div class="card">
+      <h3>Ambience</h3>
+      <div class="sound-grid" id="amb-grid"></div>
+    </div>
+    <div class="card">
+      <h3>Your sounds</h3>
+      <p class="hint">Import your own bells or ambient loops (mp3, wav, m4a…). Stored privately on this device.</p>
+      <label class="ghost file-btn">＋ Import sound<input type="file" id="file-import" accept="audio/*" multiple hidden></label>
+      <div id="imported-list"></div>
+    </div>
+    <div class="card">
+      <h3>Practice</h3>
+      <p id="stats" class="hint">No sessions yet.</p>
+    </div>
+    <div class="card">
+      <h3>Install on your phone</h3>
+      <p class="hint">iPhone: open in Safari → Share → <b>Add to Home Screen</b>.<br>
+      Android: Chrome menu → <b>Install app</b>.<br>Pranava then works fully offline, like a native app.</p>
+    </div>
+  </section>
+
+</main>
+
+<!-- ————— LIVE SESSION OVERLAY ————— -->
+<div id="session" hidden>
+  <div class="flower-wrap big">
+    <div class="flower" id="flower-live"></div>
+    <div class="flower-center"><span id="s-center"></span><small id="s-center-sub"></small></div>
+  </div>
+  <div id="s-phase"></div>
+  <div id="s-total"></div>
+  <div class="session-btns">
+    <button id="btn-pause">Pause</button>
+    <button id="btn-end">End</button>
+  </div>
+</div>
+
+<script src="storage.js"></script>
+<script src="audio.js"></script>
+<script src="presets.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

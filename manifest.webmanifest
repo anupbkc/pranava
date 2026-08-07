@@ -1,0 +1,14 @@
+{
+  "name": "Pranava — Meditation & Breathwork Timer",
+  "short_name": "Pranava",
+  "description": "Minimal meditation and breathwork timer. Singing bowls, nature sounds, anulom vilom, box breathing and custom patterns.",
+  "start_url": ".",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#14102a",
+  "theme_color": "#14102a",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}
