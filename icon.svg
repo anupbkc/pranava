@@ -1,17 +1,22 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
   <defs>
-    <radialGradient id="bg" cx="50%" cy="30%" r="90%">
-      <stop offset="0%" stop-color="#2c1f56"/>
-      <stop offset="100%" stop-color="#14102a"/>
+    <radialGradient id="bg" cx="50%" cy="28%" r="95%">
+      <stop offset="0%" stop-color="#382a75"/>
+      <stop offset="100%" stop-color="#140f2c"/>
     </radialGradient>
+    <linearGradient id="petal" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f4e8d0"/>
+      <stop offset="100%" stop-color="#cfa96e"/>
+    </linearGradient>
   </defs>
-  <rect width="256" height="256" rx="56" fill="url(#bg)"/>
-  <g fill="none" stroke="#e9dcc6" stroke-width="2.2" opacity="0.92">
-    <circle cx="88" cy="58.7" r="40"/><circle cx="128" cy="58.7" r="40"/><circle cx="168" cy="58.7" r="40"/>
-    <circle cx="68" cy="93.4" r="40"/><circle cx="108" cy="93.4" r="40"/><circle cx="148" cy="93.4" r="40"/><circle cx="188" cy="93.4" r="40"/>
-    <circle cx="48" cy="128" r="40"/><circle cx="88" cy="128" r="40"/><circle cx="128" cy="128" r="40"/><circle cx="168" cy="128" r="40"/><circle cx="208" cy="128" r="40"/>
-    <circle cx="68" cy="162.6" r="40"/><circle cx="108" cy="162.6" r="40"/><circle cx="148" cy="162.6" r="40"/><circle cx="188" cy="162.6" r="40"/>
-    <circle cx="88" cy="197.3" r="40"/><circle cx="128" cy="197.3" r="40"/><circle cx="168" cy="197.3" r="40"/>
-    <circle cx="128" cy="128" r="120" stroke="#b9a7e6" stroke-width="3"/>
-  </g>
+  <rect width="256" height="256" rx="58" fill="url(#bg)"/>
+  <circle cx="128" cy="128" r="94" fill="none" stroke="#b9a7e6" stroke-opacity=".3" stroke-width="1.5"/>
+  <g transform="rotate(-56 128 158)" opacity=".5"><path d="M128 88 C140 110 140 138 128 158 C116 138 116 110 128 88 Z" fill="url(#petal)"/></g>
+  <g transform="rotate(56 128 158)" opacity=".5"><path d="M128 88 C140 110 140 138 128 158 C116 138 116 110 128 88 Z" fill="url(#petal)"/></g>
+  <g transform="rotate(-28 128 158)" opacity=".78"><path d="M128 78 C142 104 142 134 128 158 C114 134 114 104 128 78 Z" fill="url(#petal)"/></g>
+  <g transform="rotate(28 128 158)" opacity=".78"><path d="M128 78 C142 104 142 134 128 158 C114 134 114 104 128 78 Z" fill="url(#petal)"/></g>
+  <path d="M128 68 C144 96 144 130 128 158 C112 130 112 96 128 68 Z" fill="url(#petal)"/>
+  <path d="M84 180 Q128 198 172 180" fill="none" stroke="#a5cbe8" stroke-width="3" stroke-linecap="round" opacity=".75"/>
+  <path d="M97 194 Q128 206 159 194" fill="none" stroke="#a5cbe8" stroke-width="2.5" stroke-linecap="round" opacity=".4"/>
+  <circle cx="128" cy="52" r="6" fill="#a5cbe8"/>
 </svg>

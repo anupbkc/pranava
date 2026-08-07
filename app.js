@@ -26,6 +26,11 @@ function flowerSVG(size = 300) {
     <circle cx="${cx}" cy="${cy}" r="${R * 3}"/><circle cx="${cx}" cy="${cy}" r="${R * 3 + 5}" opacity=".35"/></g></svg>`;
 }
 ['flower-med', 'flower-b', 'flower-live'].forEach(id => $('#' + id).innerHTML = flowerSVG());
+/* living flower behind the whole app */
+const bgFlower = document.createElement('div');
+bgFlower.id = 'bg-flower';
+bgFlower.innerHTML = flowerSVG(640);
+document.body.prepend(bgFlower);
 
 /* ——— tabs ——— */
 $$('#tabs button').forEach(b => b.onclick = () => {
@@ -81,12 +86,32 @@ $('#chk-voice').onchange = e => { cfg.voice = e.target.checked; saveCfg(); };
 /* ——— duration chips ——— */
 function renderChips(el, values, current, onPick) {
   el.innerHTML = '';
-  values.forEach(v => {
+  const chip = (label, active, fn) => {
     const b = document.createElement('button');
-    b.className = 'chip' + (v === current ? ' active' : '');
-    b.textContent = v === 0 ? '∞' : v;
-    b.onclick = () => { onPick(v); renderChips(el, values, v, onPick); };
+    b.className = 'chip' + (active ? ' active' : '');
+    b.innerHTML = label;
+    b.onclick = fn;
     el.appendChild(b);
+    return b;
+  };
+  values.forEach(v =>
+    chip(v === 0 ? '∞' : v, v === current, () => { onPick(v); renderChips(el, values, v, onPick); }));
+  // custom minutes — pencil chip becomes an inline input
+  const isCustom = !values.includes(current);
+  chip(isCustom ? current + '<small>min</small>' : '✎', isCustom, () => {
+    const inp = document.createElement('input');
+    inp.type = 'number'; inp.min = 1; inp.max = 600;
+    inp.value = isCustom ? current : 25;
+    inp.className = 'chip-input';
+    el.lastElementChild.replaceWith(inp);
+    inp.focus(); inp.select();
+    const commit = () => {
+      const n = Math.round(+inp.value);
+      if (n >= 1 && n <= 600 && n !== current) { onPick(n); renderChips(el, values, n, onPick); }
+      else renderChips(el, values, current, onPick);
+    };
+    inp.onblur = commit;
+    inp.onkeydown = e => { if (e.key === 'Enter') inp.blur(); };
   });
 }
 const MED_DURS = [5, 10, 15, 20, 30, 45, 60, 0];
@@ -111,7 +136,8 @@ function renderPresets() {
   allPresets().forEach(p => {
     const d = document.createElement('div');
     d.className = 'preset' + (p.id === cfg.preset ? ' active' : '');
-    d.innerHTML = `<div><b>${p.name}</b><i>${p.hint || cycleSummary(p)}</i></div><div class="acts"></div>`;
+    const bars = p.cycle.map(ph => `<span class="pb ${ph.a}" style="flex:${ph.t}"></span>`).join('');
+    d.innerHTML = `<div class="pmain"><b>${p.name}</b><i>${p.hint || cycleSummary(p)}</i><div class="pbar">${bars}</div></div><div class="acts"></div>`;
     d.onclick = () => { cfg.preset = p.id; saveCfg(); renderPresets(); };
     const acts = d.querySelector('.acts');
     const mk = (txt, fn, title) => {
