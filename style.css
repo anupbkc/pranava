@@ -117,6 +117,7 @@ input[type=checkbox]{width:19px;height:19px;accent-color:var(--violet)}
 
 /* buttons */
 .begin{
+  position:sticky;bottom:calc(env(safe-area-inset-bottom) + 96px);z-index:30;
   display:block;width:100%;margin:16px 0 6px;padding:16px;
   font-size:.95rem;letter-spacing:.42em;text-indent:.42em;text-transform:uppercase;
   color:var(--bg0);background:linear-gradient(135deg,#f0e5cf,#d5bf97);
@@ -151,6 +152,19 @@ input[type=checkbox]{width:19px;height:19px;accent-color:var(--violet)}
 .pb.rest{background:#5c5480}
 .preset .acts{display:flex;gap:2px}
 .preset .acts button{background:none;border:none;color:var(--ink-dim);cursor:pointer;font-size:.9rem;padding:4px}
+
+/* guided sessions */
+.gitem{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
+.gitem:first-child{border-top:none}
+.gitem .gmain{flex:1;min-width:0}
+.gitem b{font-weight:500;color:var(--ink);font-size:.92rem;display:block}
+.gitem i{font-style:normal;font-size:.73rem;color:var(--ink-dim)}
+.gitem select{max-width:110px;font-size:.78rem}
+.gplay{
+  width:42px;height:42px;flex:none;border-radius:50%;border:none;cursor:pointer;
+  background:linear-gradient(135deg,#f0e5cf,#d5bf97);color:var(--bg0);font-size:.9rem;
+  box-shadow:0 4px 18px rgba(233,220,198,.25);
+}
 
 /* builder */
 #builder-rows .brow{display:flex;gap:6px;margin:6px 0;align-items:center}

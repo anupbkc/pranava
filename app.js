@@ -98,6 +98,21 @@ $('#chk-cues').onchange = e => { cfg.cues = e.target.checked; saveCfg(); };
 $('#chk-voice').checked = cfg.voice;
 $('#chk-voice').onchange = e => { cfg.voice = e.target.checked; saveCfg(); };
 
+/* device speech voices for the breathwork guide */
+function loadVoices() {
+  if (!('speechSynthesis' in window)) return;
+  const vs = speechSynthesis.getVoices().filter(v => v.lang.startsWith('en'));
+  if (!vs.length) return;
+  fillSelect($('#sel-voice'), vs.map(v => [v.name, v.name.replace(/\s*\(.*/, '')]), cfg.voiceName);
+  if (!cfg.voiceName) cfg.voiceName = $('#sel-voice').value;
+}
+if ('speechSynthesis' in window) speechSynthesis.onvoiceschanged = loadVoices;
+loadVoices();
+$('#sel-voice').onchange = e => {
+  cfg.voiceName = e.target.value; saveCfg();
+  Aud.voice('The mind is calm', cfg.voiceName);
+};
+
 /* ——— duration chips ——— */
 function renderChips(el, values, current, onPick) {
   el.innerHTML = '';
@@ -257,6 +272,7 @@ function renderLibrary() {
   });
   renderStats();
 }
+$('#btn-import').onclick = () => $('#file-import').click();
 $('#file-import').onchange = async e => {
   Aud.resume();
   for (const f of e.target.files) {
@@ -320,7 +336,8 @@ function setFlower(scale, seconds) {
   fl.style.transform = `scale(${scale})`;
 }
 
-function beginSession(mode) {
+let guidedAudio = null;
+function beginSession(mode, gSess, gUrl) {
   Aud.resume(); Aud.setAmbVol(cfg.ambVol);
   S.mode = mode; S.running = true; S.paused = false; S.ending = false;
   S.elapsedMs = 0; S.lastTickSec = -1; S.pi = -1; S.phaseEndMs = 0;
@@ -330,6 +347,19 @@ function beginSession(mode) {
     S.totalMs = cfg.dur * 60000;
     S.nextBellMin = cfg.intEvery || Infinity;
     $('#s-phase').textContent = 'Settle in…';
+  } else if (mode === 'guided') {
+    S.totalMs = gSess.dur * 1000;
+    S.nextBellMin = Infinity;
+    $('#s-phase').textContent = gSess.name;
+    if (gUrl) {
+      guidedAudio = new Audio(gUrl);
+      guidedAudio.preload = 'auto';
+      // trust the real track length once known (plus a short settling tail)
+      guidedAudio.onloadedmetadata = () => {
+        if (isFinite(guidedAudio.duration) && guidedAudio.duration > 10)
+          S.totalMs = (guidedAudio.duration + 5) * 1000;
+      };
+    }
   } else {
     const p = findPreset(cfg.preset);
     S.cycle = p.cycle;
@@ -350,6 +380,7 @@ function beginSession(mode) {
     if (mode === 'meditate') $('#s-phase').textContent = '';
     playBell(cfg.start);
     startAmbience();
+    if (guidedAudio) guidedAudio.play().catch(() => {});
     S.startAt = performance.now();
     if (mode === 'breathe') nextPhase();
     S.timer = setInterval(tick, 200);
@@ -361,7 +392,7 @@ function tick() {
   S.elapsedMs = performance.now() - S.startAt;
   const left = S.totalMs > 0 ? S.totalMs - S.elapsedMs : Infinity;
   if (S.totalMs > 0) setProg(S.elapsedMs / S.totalMs);
-  if (S.mode === 'meditate') {
+  if (S.mode !== 'breathe') {
     $('#s-center').textContent = S.totalMs > 0 ? fmt(left) : fmt(S.elapsedMs);
     $('#s-total').textContent = S.totalMs > 0 ? '' : 'open sitting';
     const mins = S.elapsedMs / 60000;
@@ -401,15 +432,20 @@ function nextPhase() {
   else if (p.a === 'out' || p.a === 'hum') setFlower(0.84, p.t);
   else if (p.a === 'rest') setFlower(1.0, 2);
   if (cfg.cues) Aud.cue(p.a, p.t);
-  if (cfg.voice) Aud.voice(p.l.replace(/—/g, ','));
+  if (cfg.voice) Aud.voice(p.l.replace(/—/g, ','), cfg.voiceName);
 }
 
 $('#btn-pause').onclick = () => {
   if (!S.running) return;
   S.paused = !S.paused;
   $('#btn-pause').textContent = S.paused ? 'Resume' : 'Pause';
-  if (S.paused) { S.pausedAt = performance.now(); Aud.suspend(); }
-  else { S.startAt += performance.now() - S.pausedAt; Aud.resume(); }
+  if (S.paused) {
+    S.pausedAt = performance.now(); Aud.suspend();
+    if (guidedAudio) guidedAudio.pause();
+  } else {
+    S.startAt += performance.now() - S.pausedAt; Aud.resume();
+    if (guidedAudio) guidedAudio.play().catch(() => {});
+  }
 };
 $('#btn-end').onclick = () => endSession(false);
 
@@ -418,6 +454,7 @@ function endSession(completed) {
   S.ending = true; S.running = false;
   clearInterval(S.timer);
   speechSynthesis && speechSynthesis.cancel();
+  if (guidedAudio) { guidedAudio.pause(); guidedAudio = null; }
   Aud.stopAmbient();
   if (S.wakeLock) { S.wakeLock.release().catch(() => {}); S.wakeLock = null; }
   const minutes = S.elapsedMs / 60000;
@@ -440,8 +477,36 @@ function endSession(completed) {
 $('#begin-med').onclick = () => beginSession('meditate');
 $('#begin-breath').onclick = () => beginSession('breathe');
 
+/* ——— guided sessions (manifest lives in the repo — the app's backend) ——— */
+async function loadGuided() {
+  try {
+    const m = await (await fetch('guided.json')).json();
+    if (!m.sessions || !m.sessions.length) return;
+    const list = $('#guided-list'); list.innerHTML = '';
+    m.sessions.forEach(s => {
+      const d = document.createElement('div');
+      d.className = 'gitem';
+      const mins = Math.round(s.dur / 60);
+      d.innerHTML = `<div class="gmain"><b>${s.name}</b><i>${s.desc} · ${mins} min</i></div>`;
+      let voiceSel = null;
+      if (s.voices) {
+        voiceSel = document.createElement('select');
+        voiceSel.innerHTML = Object.keys(s.voices).map(k => `<option>${k}</option>`).join('');
+        d.appendChild(voiceSel);
+      }
+      const play = document.createElement('button');
+      play.className = 'gplay'; play.textContent = '▶';
+      play.onclick = () => beginSession('guided', s, s.voices ? s.voices[voiceSel.value] : null);
+      d.appendChild(play);
+      list.appendChild(d);
+    });
+    $('#guided-card').hidden = false;
+  } catch (e) { /* offline before first cache — card stays hidden */ }
+}
+
 /* ——— boot ——— */
 refreshSelects();
 loadImported();
+loadGuided();
 if ('serviceWorker' in navigator && location.protocol !== 'file:')
   addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));

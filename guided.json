@@ -1,0 +1,21 @@
+{
+  "sessions": [
+    {
+      "id": "pause1",
+      "name": "1-Minute Pause",
+      "desc": "One bowl · a minute of stillness",
+      "dur": 60,
+      "voices": null
+    },
+    {
+      "id": "ground5",
+      "name": "5-Minute Grounding",
+      "desc": "Three breaths · body scan · positive vibe",
+      "dur": 323,
+      "voices": {
+        "Deep male": "guided/ground5-male.m4a",
+        "Female": "guided/ground5-female.m4a"
+      }
+    }
+  ]
+}

@@ -13,8 +13,10 @@ const SoundDB = {
   tx(mode) { return this.db.transaction('sounds', mode).objectStore('sounds'); },
   async add(name, blob) {
     await this.open();
+    // store as ArrayBuffer — iOS Safari is unreliable at persisting Blobs in IndexedDB
+    const buf = await blob.arrayBuffer();
     return new Promise((res, rej) => {
-      const rq = this.tx('readwrite').add({ name, blob });
+      const rq = this.tx('readwrite').add({ name, type: blob.type, buf });
       rq.onsuccess = () => res(rq.result); rq.onerror = () => rej(rq.error);
     });
   },

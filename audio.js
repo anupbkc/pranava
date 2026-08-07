@@ -143,11 +143,15 @@ const Aud = {
     o.connect(f); o2.connect(f); f.connect(g); g.connect(this.master);
     o.start(t); o2.start(t); o.stop(t + dur); o2.stop(t + dur);
   },
-  voice(text) {
+  voice(text, voiceName) {
     if (!('speechSynthesis' in window)) return;
     speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text);
-    u.rate = 0.88; u.pitch = 0.9; u.volume = 0.9;
+    if (voiceName) {
+      const v = speechSynthesis.getVoices().find(v => v.name === voiceName);
+      if (v) u.voice = v;
+    }
+    u.rate = 0.8; u.pitch = 0.72; u.volume = 0.9; // slow and deep — mystic
     speechSynthesis.speak(u);
   },
 
@@ -243,7 +247,8 @@ const Aud = {
     if (this.buffers[key]) return this.buffers[key];
     const rec = await SoundDB.get(id);
     if (!rec) return null;
-    const ab = await rec.blob.arrayBuffer();
+    // new records store a raw ArrayBuffer; legacy ones a Blob
+    const ab = rec.buf ? rec.buf.slice(0) : await rec.blob.arrayBuffer();
     const buf = await this.ctx.decodeAudioData(ab);
     this.buffers[key] = buf;
     return buf;
