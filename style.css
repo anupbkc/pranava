@@ -62,20 +62,28 @@ h1{font-family:Georgia,'Times New Roman',serif;font-weight:400;font-size:1.28rem
 .flower-wrap{position:relative;width:min(62vw,260px);aspect-ratio:1;margin:14px auto 8px}
 .flower-wrap.sm{width:min(44vw,180px)}
 .flower-wrap.big{width:min(78vw,330px)}
-.flower{position:absolute;inset:0;color:var(--violet-soft);filter:drop-shadow(0 0 16px rgba(139,116,200,.5));
+.flower{position:absolute;inset:0;color:var(--violet-soft);filter:drop-shadow(0 0 20px rgba(139,116,200,.35));
   transition:transform 4s cubic-bezier(.4,0,.6,1)}
 .flower svg{width:100%;height:100%}
-.flower.pulse{animation:breathe 9s ease-in-out infinite}
+.flower .prog{transition:stroke-dashoffset .6s linear;filter:drop-shadow(0 0 6px rgba(233,220,198,.55))}
+.flower i.ripple{
+  position:absolute;inset:6%;border:1px solid var(--violet-soft);border-radius:50%;
+  opacity:0;pointer-events:none;animation:ripple 12s ease-out infinite;
+}
+.flower i.d2{animation-delay:4s}
+.flower i.d3{animation-delay:8s}
+@keyframes ripple{0%{transform:scale(.985);opacity:.3}70%{opacity:.06}100%{transform:scale(1.22);opacity:0}}
+.flower.pulse{animation:breathe 10s ease-in-out infinite}
 .flower.pump{animation:pump 1s ease-in-out infinite}
-@keyframes breathe{0%,100%{transform:scale(.96);opacity:.7}50%{transform:scale(1.05);opacity:1}}
+@keyframes breathe{0%,100%{transform:scale(.988)}50%{transform:scale(1.014)}}
 @keyframes pump{0%,100%{transform:scale(1.02)}30%{transform:scale(.9)}}
 .flower-center{
   position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
   pointer-events:none;text-align:center;
 }
-.flower-center span{font-family:Georgia,serif;font-size:2.5rem;color:var(--beige);text-shadow:0 0 20px rgba(233,220,198,.35)}
+.flower-center span{font-family:Georgia,serif;font-size:3rem;color:var(--beige);text-shadow:0 0 22px rgba(233,220,198,.4)}
 .flower-wrap.sm .flower-center span{font-size:.98rem;letter-spacing:.08em;max-width:80%;line-height:1.3}
-.flower-wrap.big .flower-center span{font-size:3.2rem}
+.flower-wrap.big .flower-center span{font-size:3.6rem}
 .flower-center small{font-size:.68rem;letter-spacing:.3em;text-transform:uppercase;color:var(--ink-dim);margin-top:2px}
 
 /* chips */

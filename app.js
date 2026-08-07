@@ -25,7 +25,22 @@ function flowerSVG(size = 300) {
     <g fill="none" stroke="currentColor" stroke-width="1" opacity=".85">${out.join('')}
     <circle cx="${cx}" cy="${cy}" r="${R * 3}"/><circle cx="${cx}" cy="${cy}" r="${R * 3 + 5}" opacity=".35"/></g></svg>`;
 }
-['flower-med', 'flower-b', 'flower-live'].forEach(id => $('#' + id).innerHTML = flowerSVG());
+/* time dial — thin ring, progress arc, slow water ripples */
+const DIAL_C = (2 * Math.PI * 88);
+function dialSVG() {
+  const C = DIAL_C.toFixed(1);
+  return `<svg viewBox="0 0 200 200">
+    <circle cx="100" cy="100" r="88" fill="none" stroke="currentColor" stroke-width="1.2" opacity=".3"/>
+    <circle cx="100" cy="100" r="82" fill="none" stroke="currentColor" stroke-width=".6" opacity=".14"/>
+    <circle class="prog" cx="100" cy="100" r="88" fill="none" stroke="#e9dcc6" stroke-width="2.2" stroke-linecap="round"
+      stroke-dasharray="${C}" stroke-dashoffset="${C}" transform="rotate(-90 100 100)"/>
+  </svg><i class="ripple"></i><i class="ripple d2"></i><i class="ripple d3"></i>`;
+}
+['flower-med', 'flower-b', 'flower-live'].forEach(id => $('#' + id).innerHTML = dialSVG());
+function setProg(frac) {
+  const el = $('#flower-live .prog');
+  if (el) el.style.strokeDashoffset = DIAL_C * (1 - Math.min(1, Math.max(0, frac)));
+}
 /* living flower behind the whole app */
 const bgFlower = document.createElement('div');
 bgFlower.id = 'bg-flower';
@@ -309,6 +324,7 @@ function beginSession(mode) {
   Aud.resume(); Aud.setAmbVol(cfg.ambVol);
   S.mode = mode; S.running = true; S.paused = false; S.ending = false;
   S.elapsedMs = 0; S.lastTickSec = -1; S.pi = -1; S.phaseEndMs = 0;
+  setProg(0);
   grabWakeLock(); showSession();
   if (mode === 'meditate') {
     S.totalMs = cfg.dur * 60000;
@@ -331,6 +347,7 @@ function beginSession(mode) {
     if (prep > 0) { $('#s-center').textContent = prep; return; }
     clearInterval(prepTimer);
     $('#s-center-sub').textContent = '';
+    if (mode === 'meditate') $('#s-phase').textContent = '';
     playBell(cfg.start);
     startAmbience();
     S.startAt = performance.now();
@@ -343,6 +360,7 @@ function tick() {
   if (!S.running || S.paused) return;
   S.elapsedMs = performance.now() - S.startAt;
   const left = S.totalMs > 0 ? S.totalMs - S.elapsedMs : Infinity;
+  if (S.totalMs > 0) setProg(S.elapsedMs / S.totalMs);
   if (S.mode === 'meditate') {
     $('#s-center').textContent = S.totalMs > 0 ? fmt(left) : fmt(S.elapsedMs);
     $('#s-total').textContent = S.totalMs > 0 ? '' : 'open sitting';
