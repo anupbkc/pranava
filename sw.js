@@ -1,7 +1,7 @@
 /* Pranava service worker — cache-first, fully offline. */
-const CACHE = 'pranava-v5';
+const CACHE = 'pranava-v6';
 const ASSETS = ['./', './index.html', './style.css', './app.js', './audio.js',
-  './presets.js', './storage.js', './manifest.webmanifest', './icon.svg'];
+  './presets.js', './storage.js', './manifest.webmanifest', './icon.svg', './giri.svg'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));

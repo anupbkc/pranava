@@ -321,27 +321,39 @@ document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible' && S.running && !S.wakeLock) grabWakeLock();
 });
 
-/* chakra orbs — rise along the left arc of the dial, root (bottom) to crown (top) */
+/* chakra visualization — translucent meditator in lotus posture, chakras at their
+   true places on the body, energy beam rising through the spine as the voice ascends */
 const CH_COLORS = ['#e0483c', '#f08c3a', '#f2c14e', '#58c08a', '#58a8dd', '#5a63c9', '#b28ae0'];
+const CH_Y = [178, 152, 128, 104, 78, 52, 26]; // root → crown along the spine
 function buildOrbs() {
-  const box = $('#chakra-orbs'); box.innerHTML = ''; box.hidden = false;
-  for (let i = 0; i < 7; i++) {
-    const a = i * Math.PI / 6;
-    const d = document.createElement('b');
-    d.className = 'orb';
-    d.style.left = (50 - 52 * Math.sin(a)) + '%';
-    d.style.top = (50 + 52 * Math.cos(a)) + '%';
-    d.style.setProperty('--c', CH_COLORS[i]);
-    box.appendChild(d);
-  }
+  const box = $('#chakra-orbs'); box.hidden = false;
+  box.innerHTML = `<svg viewBox="0 0 200 216">
+    <defs>
+      <linearGradient id="beamg" x1="0" y1="1" x2="0" y2="0">
+        <stop offset="0" stop-color="#e9dcc6" stop-opacity=".08"/>
+        <stop offset="1" stop-color="#e9dcc6" stop-opacity=".8"/>
+      </linearGradient>
+    </defs>
+    <g fill="rgba(185,167,230,.06)" stroke="rgba(185,167,230,.38)" stroke-width="1.5" stroke-linejoin="round">
+      <circle cx="100" cy="50" r="17"/>
+      <path d="M100 67 C 126 78 140 100 143 132 Q 145 152 130 158 L 70 158 Q 55 152 57 132 C 60 100 74 78 100 67 Z"/>
+      <path d="M100 182 m -62 0 a 62 15 0 1 0 124 0 a 62 15 0 1 0 -124 0"/>
+      <path d="M67 96 C 52 116 48 138 58 154" fill="none" opacity=".7"/>
+      <path d="M133 96 C 148 116 152 138 142 154" fill="none" opacity=".7"/>
+    </g>
+    <rect id="chakra-beam" x="98.6" y="26" width="2.8" rx="1.4" height="152" fill="url(#beamg)" opacity=".6"/>
+    ${CH_Y.map((y, i) => `<circle class="orb" cx="100" cy="${y}" r="6.5" fill="${CH_COLORS[i]}" style="--c:${CH_COLORS[i]}"/>`).join('')}
+  </svg>`;
 }
 function updateOrbs(frac) {
   if (!S.marks) return;
   const lit = S.marks.filter(m => frac >= m).length;
-  [...$('#chakra-orbs').children].forEach((o, i) => {
+  [...$('#chakra-orbs').querySelectorAll('.orb')].forEach((o, i) => {
     o.classList.toggle('lit', i < lit);
     o.classList.toggle('current', i === lit - 1);
   });
+  const beam = $('#chakra-beam');
+  if (beam) beam.style.transform = `scaleY(${lit ? (178 - CH_Y[lit - 1]) / 152 : 0})`;
 }
 
 function showSession() { $('#session').hidden = false; $('#mini').hidden = true; }
@@ -349,6 +361,8 @@ function hideSession() {
   $('#session').hidden = true;
   $('#mini').hidden = true;
   $('#chakra-orbs').hidden = true;
+  $('#s-center').style.display = '';
+  $('#session').classList.remove('chakra-mode');
   const fl = $('#flower-live');
   fl.classList.remove('pulse', 'pump');
   fl.style.transform = ''; fl.style.transitionDuration = '';
@@ -367,6 +381,7 @@ function beginSession(mode, gSess, gUrl) {
   S.mode = mode; S.running = true; S.paused = false; S.ending = false;
   S.elapsedMs = 0; S.lastTickSec = -1; S.pi = -1; S.phaseEndMs = 0;
   S.soft = false; S.marks = null;
+  clearTimeout(S.doneTO); // a lingering auto-close from a finished session must not hide this one
   $('#chakra-orbs').hidden = true;
   setProg(0);
   grabWakeLock(); showSession();
@@ -412,6 +427,7 @@ function beginSession(mode, gSess, gUrl) {
     clearInterval(prepTimer);
     $('#s-center-sub').textContent = '';
     if (mode === 'meditate') $('#s-phase').textContent = '';
+    if (S.marks) { $('#s-center').style.display = 'none'; $('#session').classList.add('chakra-mode'); }
     playBell(cfg.start);
     startAmbience();
     if (guidedAudio) guidedAudio.play().catch(() => {});
@@ -433,7 +449,9 @@ function tick() {
     S.totalMs > 0 ? fmt(S.totalMs - S.elapsedMs) : fmt(S.elapsedMs);
   if (S.mode !== 'breathe') {
     $('#s-center').textContent = S.totalMs > 0 ? fmt(left) : fmt(S.elapsedMs);
-    $('#s-total').textContent = S.totalMs > 0 ? '' : 'open sitting';
+    $('#s-total').textContent = S.totalMs > 0
+      ? (S.mode === 'guided' ? fmt(left) + ' remaining' : '')
+      : 'open sitting';
     const mins = S.elapsedMs / 60000;
     if (mins >= S.nextBellMin && left > 3000) {
       playBell(cfg.intSound, .8);
@@ -495,6 +513,7 @@ $('#btn-min').onclick = () => {
   $('#mini-time').textContent = S.totalMs > 0 ? fmt(S.totalMs - S.elapsedMs) : fmt(S.elapsedMs);
 };
 $('#mini').onclick = () => showSession();
+$('#mini-end').onclick = e => { e.stopPropagation(); endSession(false); };
 
 /* live mix — voice & ambience volume during a session */
 $('#rng-voice').oninput = e => { if (guidedAudio) guidedAudio.volume = +e.target.value; };
@@ -523,7 +542,7 @@ function endSession(completed) {
     $('#s-center-sub').textContent = 'well done';
     $('#s-total').textContent = '';
     setFlower(1, 3);
-    setTimeout(hideSession, 7000);
+    S.doneTO = setTimeout(hideSession, 7000);
   } else {
     playBell(cfg.end, .5);
     hideSession();
