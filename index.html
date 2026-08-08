@@ -105,6 +105,7 @@
       <label class="row">
         <span>Ambience volume</span>
         <input type="range" id="rng-amb" min="0" max="1" step="0.05">
+        <em class="pct" id="amb-pct"></em>
       </label>
     </div>
   </section>
@@ -240,8 +241,8 @@
   <div id="s-phase"></div>
   <div id="s-total"></div>
   <div id="s-mix">
-    <label id="mix-voice-row"><span>Voice</span><input type="range" id="rng-voice" min="0" max="1" step="0.05" value="1"></label>
-    <label><span>Ambience</span><input type="range" id="rng-bg" min="0" max="1" step="0.05"></label>
+    <label id="mix-voice-row"><span>Voice</span><input type="range" id="rng-voice" min="0" max="1" step="0.05" value="1"><em class="pct" id="voice-pct">100%</em></label>
+    <label><span>Ambience</span><input type="range" id="rng-bg" min="0" max="1" step="0.05"><em class="pct" id="bg-pct"></em></label>
   </div>
   <div class="session-btns">
     <button id="btn-pause">Pause</button>

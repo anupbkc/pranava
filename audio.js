@@ -37,7 +37,9 @@ const Aud = {
     } catch (e) {}
   },
   suspend() { if (this.ctx && this.ctx.state === 'running') this.ctx.suspend(); },
-  setAmbVol(v) { this.init(); this.ambGain.gain.value = v; },
+  /* squared curve: knob position matches perceived loudness.
+     100% = the file's own full volume, 0% = silence */
+  setAmbVol(v) { this.init(); this.ambGain.gain.value = v * v; },
 
   noiseBuffer() {
     if (this._noise) return this._noise;

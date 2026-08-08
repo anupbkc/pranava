@@ -266,6 +266,7 @@ input[type=checkbox]{width:19px;height:19px;accent-color:var(--violet)}
 #s-mix label{display:flex;align-items:center;gap:12px;font-size:.68rem;letter-spacing:.22em;text-transform:uppercase;color:var(--ink-dim)}
 #s-mix span{width:72px;text-align:right}
 #s-mix input[type=range]{flex:1;width:auto}
+.pct{font-style:normal;font-size:.68rem;color:var(--beige);width:38px;text-align:right;letter-spacing:.05em}
 #mini{
   position:fixed;left:50%;transform:translateX(-50%);
   bottom:calc(env(safe-area-inset-bottom) + 90px);z-index:39;

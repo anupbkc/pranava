@@ -127,13 +127,32 @@ $('#sel-int').onchange = e => {
     S.nextBellMin = cfg.intEvery ? (Math.floor(elMin / cfg.intEvery) + 1) * cfg.intEvery : Infinity;
   }
 };
+let ambPrevT = null;
 [$('#sel-amb'), $('#sel-amb-b')].forEach(sel => sel.onchange = e => {
   cfg.amb = e.target.value; saveCfg();
   $('#sel-amb').value = cfg.amb; $('#sel-amb-b').value = cfg.amb;
   if (S.running && !S.paused) startAmbience(); // takes effect mid-session
+  else {
+    // not in a session: play a short preview so the choice is audible
+    Aud.setAmbVol(cfg.ambVol); startAmbience();
+    clearTimeout(ambPrevT);
+    ambPrevT = setTimeout(() => { if (!S.running) Aud.stopAmbient(); }, 6000);
+  }
 });
+
+/* one volume, every knob — all sliders mirror cfg.ambVol instantly */
+function setAmbVolume(v, skipEl) {
+  cfg.ambVol = v; saveCfg();
+  Aud.setAmbVol(v);
+  [$('#rng-amb'), $('#rng-bg')].forEach(el => { if (el && el !== skipEl) el.value = v; });
+  const pct = Math.round(v * 100) + '%';
+  const a = $('#amb-pct'), b = $('#bg-pct');
+  if (a) a.textContent = pct;
+  if (b) b.textContent = pct;
+}
 $('#rng-amb').value = cfg.ambVol;
-$('#rng-amb').oninput = e => { cfg.ambVol = +e.target.value; saveCfg(); Aud.setAmbVol(cfg.ambVol); };
+$('#amb-pct').textContent = Math.round(cfg.ambVol * 100) + '%';
+$('#rng-amb').oninput = e => setAmbVolume(+e.target.value, e.target);
 $('#chk-cues').checked = cfg.cues;
 $('#chk-cues').onchange = e => { cfg.cues = e.target.checked; saveCfg(); };
 $('#chk-voice').checked = cfg.voice;
@@ -502,7 +521,8 @@ function beginSession(mode, gSess, gUrl) {
   $('#mini-name').textContent = mode === 'guided' ? gSess.name : mode === 'breathe' ? findPreset(cfg.preset).name : 'Meditation';
   $('#mix-voice-row').style.display = mode === 'guided' && gUrl ? '' : 'none';
   $('#rng-voice').value = 1;
-  $('#rng-bg').value = cfg.ambVol;
+  const vp = $('#voice-pct'); if (vp) vp.textContent = '100%';
+  setAmbVolume(cfg.ambVol);
   if (mode === 'meditate') {
     S.totalMs = cfg.dur * 60000;
     S.nextBellMin = cfg.intEvery || Infinity;
@@ -517,6 +537,9 @@ function beginSession(mode, gSess, gUrl) {
     if (gUrl) {
       guidedAudio = new Audio(gUrl);
       guidedAudio.preload = 'auto';
+      // iOS allows later programmatic play() only if the element played
+      // once inside a real tap — bless it now, inside this Begin tap
+      guidedAudio.play().then(() => { guidedAudio.pause(); guidedAudio.currentTime = 0; }).catch(() => {});
       // trust the real track length once known (plus a short settling tail)
       guidedAudio.onloadedmetadata = () => {
         if (isFinite(guidedAudio.duration) && guidedAudio.duration > 10)
@@ -630,12 +653,12 @@ $('#mini').onclick = () => showSession();
 $('#mini-end').onclick = e => { e.stopPropagation(); endSession(false); };
 
 /* live mix — voice & ambience volume during a session */
-$('#rng-voice').oninput = e => { if (guidedAudio) guidedAudio.volume = +e.target.value; };
-$('#rng-bg').oninput = e => {
-  cfg.ambVol = +e.target.value; saveCfg();
-  Aud.setAmbVol(cfg.ambVol);
-  $('#rng-amb').value = cfg.ambVol;
+$('#rng-voice').oninput = e => {
+  const v = +e.target.value;
+  if (guidedAudio) guidedAudio.volume = v * v;
+  const p = $('#voice-pct'); if (p) p.textContent = Math.round(v * 100) + '%';
 };
+$('#rng-bg').oninput = e => setAmbVolume(+e.target.value, e.target);
 
 function endSession(completed) {
   if (S.ending) return;
@@ -706,7 +729,8 @@ const APP_VERSION = 'v8';
     const log = store.get('pranava.log', []);
     $('#dev-ver').textContent = '· ' + APP_VERSION;
     $('#dev-info').textContent =
-      `${log.length} logged sessions · ${customs.length} custom patterns · ${imported.length} imported sounds · sw cache + IndexedDB "pranava"`;
+      `${log.length} logged sessions · ${customs.length} custom patterns · ${imported.length} imported sounds · ` +
+      `audio: ctx=${Aud.ctx ? Aud.ctx.state : 'not created'}, audioSession=${'audioSession' in navigator ? 'yes' : 'no'}, ambVol=${Math.round(cfg.ambVol * 100)}%`;
   });
   $('#dev-close').onclick = () => $('#dev').hidden = true;
   $('#dev-export').onclick = () => {
