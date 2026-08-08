@@ -16,6 +16,26 @@
         "Deep male": "guided/ground5-male.m4a",
         "Female": "guided/ground5-female.m4a"
       }
+    },
+    {
+      "id": "kundalini",
+      "name": "Kundalini Rising",
+      "desc": "Golden light rising through the spine",
+      "dur": 369,
+      "voices": {
+        "Deep male": "guided/kundalini-male.m4a",
+        "Female": "guided/kundalini-female.m4a"
+      }
+    },
+    {
+      "id": "chakra7",
+      "name": "Seven Chakras",
+      "desc": "Root to crown · colors & affirmations",
+      "dur": 607,
+      "voices": {
+        "Deep male": "guided/chakra7-male.m4a",
+        "Female": "guided/chakra7-female.m4a"
+      }
     }
   ]
 }

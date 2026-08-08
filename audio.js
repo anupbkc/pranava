@@ -11,7 +11,11 @@ const Aud = {
     this.ctx = new C();
     this.master = this.ctx.createGain();
     this.master.gain.value = 0.9;
-    this.master.connect(this.ctx.destination);
+    // gentle warmth filter — rounds off any harsh highs from every sound
+    this.warm = this.ctx.createBiquadFilter();
+    this.warm.type = 'lowpass'; this.warm.frequency.value = 5200; this.warm.Q.value = 0.6;
+    this.master.connect(this.warm);
+    this.warm.connect(this.ctx.destination);
     this.ambGain = this.ctx.createGain();
     this.ambGain.gain.value = 0.5;
     this.ambGain.connect(this.master);
@@ -63,47 +67,47 @@ const Aud = {
     s.start(t0); s.stop(t0 + dur + 0.05);
   },
 
-  /* ——— bells & bowls ——— */
+  /* ——— bells & bowls — all tuned to the 432 Hz family (108 · 216 · 432 · 864 · 2160) ——— */
   bowl(vol = 1) {
-    this.resume(); const t = this.ctx.currentTime + 0.02, base = 196;
-    [[1, .5, 3.5], [2.94, .22, 2.2], [5.35, .11, 1.4], [8.4, .05, .8]].forEach(([r, p, tau]) => {
-      this.partial(base * r * 0.999, p * vol, t, tau, 15);
-      this.partial(base * r * 1.0035, p * vol * .8, t, tau, 15);
+    this.resume(); const t = this.ctx.currentTime + 0.02, base = 216; // 432/2
+    [[1, .5, 3.8], [2.0, .17, 2.6], [2.96, .09, 1.8], [4.2, .04, 1.1]].forEach(([r, p, tau]) => {
+      this.partial(base * r * 0.9992, p * vol, t, tau, 16);
+      this.partial(base * r * 1.0028, p * vol * .8, t, tau, 16);
     });
-    this.strike(t, .05 * vol, .03, base * 8);
+    this.strike(t, .03 * vol, .025, base * 6);
   },
   gong(vol = 1) {
-    this.resume(); const t = this.ctx.currentTime + 0.02, base = 82;
-    [[1, .4, 4.5], [1.51, .28, 3.6], [2.05, .2, 3], [2.66, .14, 2.3],
-     [3.43, .09, 1.7], [4.28, .06, 1.2], [5.7, .04, .9]].forEach(([r, p, tau]) => {
-      this.partial(base * r * 0.998, p * vol, t, tau, 16);
-      this.partial(base * r * 1.004, p * vol * .7, t, tau, 16);
+    this.resume(); const t = this.ctx.currentTime + 0.02, base = 108; // 432/4 — the sacred 108
+    [[1, .4, 4.8], [1.5, .26, 3.8], [2.05, .18, 3], [2.66, .11, 2.3],
+     [3.43, .06, 1.7], [4.28, .035, 1.2]].forEach(([r, p, tau]) => {
+      this.partial(base * r * 0.9985, p * vol, t, tau, 17);
+      this.partial(base * r * 1.003, p * vol * .7, t, tau, 17);
     });
-    this.strike(t, .12 * vol, .25, 500);
+    this.strike(t, .07 * vol, .25, 400);
   },
   tingsha(vol = 1) {
-    this.resume(); const t = this.ctx.currentTime + 0.02;
-    this.partial(2472, .22 * vol, t, 1.3, 6);
-    this.partial(2472 * 1.022, .2 * vol, t, 1.3, 6);
-    this.partial(2472 * 2.1, .05 * vol, t, .7, 4);
-    this.strike(t, .04 * vol, .015, 5000);
+    this.resume(); const t = this.ctx.currentTime + 0.02, base = 2160; // 432×5
+    this.partial(base, .16 * vol, t, 1.5, 7);
+    this.partial(base * 1.015, .14 * vol, t, 1.5, 7);
+    this.partial(base * 2, .025 * vol, t, .8, 4);
+    this.strike(t, .02 * vol, .015, 4300);
   },
   bell(vol = 1) {
-    this.resume(); const t = this.ctx.currentTime + 0.02, base = 660;
-    [[1, .35, 1.8], [2.4, .15, 1.2], [3.9, .07, .8]].forEach(([r, p, tau]) => {
-      this.partial(base * r, p * vol, t, tau, 8);
-      this.partial(base * r * 1.004, p * vol * .7, t, tau, 8);
+    this.resume(); const t = this.ctx.currentTime + 0.02, base = 432;
+    [[1, .35, 2.2], [2.0, .12, 1.5], [3.01, .05, 1]].forEach(([r, p, tau]) => {
+      this.partial(base * r, p * vol, t, tau, 9);
+      this.partial(base * r * 1.003, p * vol * .7, t, tau, 9);
     });
-    this.strike(t, .03 * vol, .02, 2600);
+    this.strike(t, .018 * vol, .02, 1700);
   },
   tick() {
     this.resume(); const t = this.ctx.currentTime;
     const o = this.ctx.createOscillator(), g = this.ctx.createGain();
-    o.type = 'sine'; o.frequency.value = 1100;
-    g.gain.setValueAtTime(.12, t);
-    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.05);
+    o.type = 'sine'; o.frequency.value = 864; // 432×2
+    g.gain.setValueAtTime(.1, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.06);
     o.connect(g); g.connect(this.master);
-    o.start(t); o.stop(t + 0.07);
+    o.start(t); o.stop(t + 0.08);
   },
 
   /* ——— breath cues ——— */
@@ -121,10 +125,10 @@ const Aud = {
   },
   cue(kind, phaseDur) {
     switch (kind) {
-      case 'in':   this.sweep(300, 520, Math.min(phaseDur * 0.5, 1.4)); break;
-      case 'out':  this.sweep(520, 290, Math.min(phaseDur * 0.5, 1.6)); break;
+      case 'in':   this.sweep(324, 432, Math.min(phaseDur * 0.5, 1.4)); break; // rising to 432
+      case 'out':  this.sweep(432, 288, Math.min(phaseDur * 0.5, 1.6)); break;
       case 'hum':  this.hum(Math.min(phaseDur, 8)); break;
-      case 'hold': this.sweep(430, 432, 0.35, .07); break;
+      case 'hold': this.sweep(431, 432, 0.35, .06); break;
       case 'rest': this.bell(.35); break;
       case 'pump': break; // metronome ticks handle it
     }
@@ -133,9 +137,9 @@ const Aud = {
     this.resume(); const t = this.ctx.currentTime;
     const o = this.ctx.createOscillator(), o2 = this.ctx.createOscillator();
     const f = this.ctx.createBiquadFilter(), g = this.ctx.createGain();
-    o.type = 'sawtooth'; o.frequency.value = 130;
-    o2.type = 'sine'; o2.frequency.value = 130 * 1.007;
-    f.type = 'lowpass'; f.frequency.value = 320;
+    o.type = 'sawtooth'; o.frequency.value = 108;
+    o2.type = 'sine'; o2.frequency.value = 108 * 1.007;
+    f.type = 'lowpass'; f.frequency.value = 300;
     g.gain.setValueAtTime(0, t);
     g.gain.linearRampToValueAtTime(.08, t + 0.4);
     g.gain.setValueAtTime(.08, t + dur - 0.5);
@@ -180,9 +184,9 @@ const Aud = {
     }
     switch (id) {
       case 'om': {
-        const f = this.ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 800;
+        const f = this.ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 700;
         const g = this.ctx.createGain(); g.gain.value = .5;
-        [[110, .14], [110 * 1.005, .1], [220, .05], [330, .02]].forEach(([fr, p]) => {
+        [[108, .15], [108 * 1.005, .1], [216, .05], [324, .02]].forEach(([fr, p]) => {
           const o = keep(this.ctx.createOscillator()), og = this.ctx.createGain();
           o.frequency.value = fr; og.gain.value = p;
           o.connect(og); og.connect(f); o.start();
