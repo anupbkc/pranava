@@ -183,8 +183,15 @@
       for every device. Each session can offer several voices (male, female, your own).</p>
     </div>
     <div class="card">
-      <h3>Practice</h3>
-      <p id="stats" class="hint">No sessions yet.</p>
+      <h3>Practice report</h3>
+      <div id="stats"></div>
+    </div>
+    <div class="card">
+      <h3>Account</h3>
+      <p class="hint">You're using Pranava <b>without an account</b> — sessions, sounds and your
+      progress report stay private on this device, and everything works offline.
+      Cloud accounts (sign in to sync history across devices) are on the roadmap
+      and will always be optional.</p>
     </div>
     <div class="card">
       <h3>Install on your phone</h3>
@@ -237,6 +244,21 @@
 <button id="mini" hidden>
   <span class="mdot"></span><span id="mini-time"></span><span id="mini-name"></span><span id="mini-end" role="button" aria-label="End session">✕</span>
 </button>
+
+<div id="dev" hidden>
+  <div class="card">
+    <h3>Builder console <small id="dev-ver"></small></h3>
+    <p class="hint" id="dev-info"></p>
+    <div class="devbtns">
+      <button class="ghost sm-btn" id="dev-export">Export data</button>
+      <label class="ghost sm-btn">Import data<input type="file" id="dev-import" accept=".json" hidden></label>
+      <button class="ghost sm-btn" id="dev-refresh">Force update</button>
+      <button class="ghost sm-btn" id="dev-close">Close</button>
+    </div>
+    <p class="hint">Backend: <a href="https://github.com/anupbkc/pranava" target="_blank" rel="noopener">github.com/anupbkc/pranava</a> —
+    guided sessions live in <b>guided/</b> + <b>guided.json</b>; full map in <b>ARCHITECTURE.md</b>.</p>
+  </div>
+</div>
 
 <script src="storage.js"></script>
 <script src="audio.js"></script>

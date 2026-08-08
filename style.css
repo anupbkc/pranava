@@ -8,6 +8,7 @@
   --card:rgba(185,167,230,.055); --line:rgba(185,167,230,.13);
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+[hidden]{display:none!important}
 html{
   font-size:16px;
   background:radial-gradient(120% 90% at 50% -10%, var(--bg2) 0%, var(--bg1) 45%, var(--bg0) 100%) fixed var(--bg0);
@@ -256,6 +257,24 @@ input[type=checkbox]{width:19px;height:19px;accent-color:var(--violet)}
   border:1px solid var(--line);color:var(--ink-dim);font-size:.8rem;
 }
 #mini #mini-end:active{color:var(--beige);border-color:var(--beige)}
+
+/* practice report */
+.prow{display:flex;justify-content:space-between;gap:8px;margin-bottom:16px}
+.pstat{text-align:center;flex:1}
+.pstat b{display:block;font-family:Georgia,serif;font-weight:400;font-size:1.15rem;color:var(--beige)}
+.pstat i{font-style:normal;font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-dim)}
+.pbars{display:flex;align-items:flex-end;justify-content:space-between;gap:6px;height:88px;padding:0 4px}
+.pcol{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px;height:100%}
+.pcol em{font-style:normal;font-size:.6rem;color:var(--ink-dim)}
+.pfill{width:100%;max-width:26px;border-radius:6px 6px 2px 2px;background:linear-gradient(180deg,var(--violet-soft),var(--violet));box-shadow:0 0 10px rgba(139,116,200,.35)}
+.pcol span{font-size:.6rem;letter-spacing:.1em;color:var(--ink-dim)}
+
+/* builder console */
+#dev{position:fixed;inset:0;z-index:95;background:rgba(10,7,22,.8);backdrop-filter:blur(8px);
+  display:flex;align-items:center;justify-content:center;padding:24px}
+#dev .card{max-width:420px;width:100%}
+.devbtns{display:flex;flex-wrap:wrap;gap:2px;margin:8px 0}
+#dev a{color:var(--sky)}
 
 /* GIRI credit */
 #giri{

@@ -62,6 +62,9 @@ document.body.prepend(bgFlower);
   sp.addEventListener('wheel', e => { if (e.deltaY > 15) dismiss(); }, { passive: true });
   sp.addEventListener('click', dismiss);
 })();
+/* iOS audio unlock — must happen inside the first real touch */
+['touchend', 'click'].forEach(ev =>
+  document.addEventListener(ev, () => Aud.unlock(), { once: true, capture: true }));
 
 /* ——— tabs ——— */
 $$('#tabs button').forEach(b => b.onclick = () => {
@@ -69,12 +72,15 @@ $$('#tabs button').forEach(b => b.onclick = () => {
   $$('.view').forEach(v => v.classList.toggle('active', v.id === 'view-' + b.dataset.view));
 });
 
-/* ——— sound pickers ——— */
+/* ——— sound pickers ———
+   imported sounds route by length: ≤45s → bells, >45s → ambience loops */
+const AMBIENT_MIN_SEC = 45;
+const isAmbient = s => s.dur > AMBIENT_MIN_SEC;
 function bellOptions() {
-  return BUILTIN_BELLS.concat(imported.map(s => ['imp:' + s.id, s.name]));
+  return BUILTIN_BELLS.concat(imported.filter(s => !isAmbient(s)).map(s => ['imp:' + s.id, s.name]));
 }
 function ambOptions() {
-  return BUILTIN_AMB.concat(imported.map(s => ['imp:' + s.id, s.name + ' (loop)']));
+  return BUILTIN_AMB.concat(imported.filter(s => !s.dur || isAmbient(s)).map(s => ['imp:' + s.id, s.name + ' (loop)']));
 }
 function fillSelect(sel, opts, val) {
   sel.innerHTML = opts.map(([v, l]) => `<option value="${v}">${l}</option>`).join('');
@@ -287,7 +293,8 @@ function renderLibrary() {
   imported.forEach(s => {
     const d = document.createElement('div');
     d.className = 'imp';
-    d.innerHTML = `<span>${s.name}</span><span></span>`;
+    const tag = s.dur ? (isAmbient(s) ? ' · ambience' : ' · bell') : '';
+    d.innerHTML = `<span>${s.name}<small style="color:var(--ink-dim)">${tag}</small></span><span></span>`;
     const span = d.lastElementChild;
     const play = document.createElement('button');
     play.textContent = '▶'; play.onclick = () => Aud.playImported(s.id);
@@ -307,23 +314,49 @@ $('#file-import').onchange = async e => {
   Aud.resume();
   for (const f of e.target.files) {
     if (f.size > 15 * 1024 * 1024) { alert(f.name + ' is over 15 MB — please use a smaller file.'); continue; }
-    await SoundDB.add(f.name.replace(/\.[^.]+$/, ''), f);
+    let dur = 0;
+    try { Aud.init(); dur = (await Aud.ctx.decodeAudioData(await f.arrayBuffer())).duration; }
+    catch (err) { alert('Could not read ' + f.name + ' — format not supported on this device.'); continue; }
+    await SoundDB.add(f.name.replace(/\.[^.]+$/, ''), f, dur);
   }
   e.target.value = '';
   await loadImported();
 };
 async function loadImported() {
-  try { imported = (await SoundDB.all()).map(r => ({ id: r.id, name: r.name })); }
+  try { imported = (await SoundDB.all()).map(r => ({ id: r.id, name: r.name, dur: r.dur || 0 })); }
   catch { imported = []; }
   refreshSelects(); renderLibrary();
 }
 
-/* ——— stats ——— */
+/* ——— practice progress report (local, no account needed) ——— */
 function renderStats() {
   const log = store.get('pranava.log', []);
-  if (!log.length) { $('#stats').textContent = 'No sessions yet.'; return; }
-  const mins = Math.round(log.reduce((a, s) => a + s.m, 0));
-  $('#stats').textContent = `${log.length} session${log.length > 1 ? 's' : ''} · ${mins} mindful minutes 🙏`;
+  const el = $('#stats');
+  if (!log.length) { el.innerHTML = '<p class="hint">No sessions yet — your progress report will grow here.</p>'; return; }
+  const totalMin = log.reduce((a, s) => a + s.m, 0);
+  const days = new Set(log.map(s => s.d));
+  const dayKey = dt => dt.toISOString().slice(0, 10);
+  // streak: consecutive practice days ending today (or yesterday)
+  let streak = 0; const d = new Date();
+  if (!days.has(dayKey(d))) d.setDate(d.getDate() - 1);
+  while (days.has(dayKey(d))) { streak++; d.setDate(d.getDate() - 1); }
+  // last 7 days
+  const bars = [];
+  for (let i = 6; i >= 0; i--) {
+    const dt = new Date(); dt.setDate(dt.getDate() - i);
+    const k = dayKey(dt);
+    bars.push({ m: log.filter(s => s.d === k).reduce((a, s) => a + s.m, 0), w: 'SMTWTFS'[dt.getDay()] });
+  }
+  const mx = Math.max(1, ...bars.map(b => b.m));
+  el.innerHTML = `
+    <div class="prow">
+      <div class="pstat"><b>${Math.floor(totalMin / 60)}h ${Math.round(totalMin % 60)}m</b><i>total</i></div>
+      <div class="pstat"><b>${log.length}</b><i>sessions</i></div>
+      <div class="pstat"><b>${streak}</b><i>day streak</i></div>
+      <div class="pstat"><b>${Math.round(totalMin / log.length)}m</b><i>average</i></div>
+    </div>
+    <div class="pbars">${bars.map(b =>
+      `<div class="pcol"><em>${b.m ? Math.round(b.m) : ''}</em><div class="pfill" style="height:${Math.max(4, Math.round(b.m / mx * 56))}px"></div><span>${b.w}</span></div>`).join('')}</div>`;
 }
 function logSession(mode, minutes) {
   if (minutes < 0.5) return;
@@ -608,6 +641,46 @@ async function loadGuided() {
     $('#guided-card').hidden = false;
   } catch (e) { /* offline before first cache — card stays hidden */ }
 }
+
+/* ——— builder console — 7 taps on the GIRI emblem, passphrase-gated ——— */
+const APP_VERSION = 'v8';
+(() => {
+  let taps = 0, tapT = null;
+  $('#giri img').addEventListener('click', () => {
+    taps++; clearTimeout(tapT); tapT = setTimeout(() => taps = 0, 1600);
+    if (taps < 7) return;
+    taps = 0;
+    if (prompt('Builder passphrase:') !== '108gayatri') return;
+    $('#dev').hidden = false;
+    const log = store.get('pranava.log', []);
+    $('#dev-ver').textContent = '· ' + APP_VERSION;
+    $('#dev-info').textContent =
+      `${log.length} logged sessions · ${customs.length} custom patterns · ${imported.length} imported sounds · sw cache + IndexedDB "pranava"`;
+  });
+  $('#dev-close').onclick = () => $('#dev').hidden = true;
+  $('#dev-export').onclick = () => {
+    const data = { exported: new Date().toISOString(), cfg, log: store.get('pranava.log', []), customs };
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
+    a.download = 'pranava-data.json'; a.click();
+  };
+  $('#dev-import').onchange = async e => {
+    const f = e.target.files[0]; if (!f) return;
+    try {
+      const data = JSON.parse(await f.text());
+      if (data.cfg) store.set('pranava.cfg', data.cfg);
+      if (data.log) store.set('pranava.log', data.log);
+      if (data.customs) store.set('pranava.custom', data.customs);
+      location.reload();
+    } catch { alert('Not a valid Pranava data file.'); }
+  };
+  $('#dev-refresh').onclick = async () => {
+    if ('serviceWorker' in navigator)
+      for (const r of await navigator.serviceWorker.getRegistrations()) await r.unregister();
+    for (const k of await caches.keys()) await caches.delete(k);
+    location.reload();
+  };
+})();
 
 /* ——— boot ——— */
 refreshSelects();

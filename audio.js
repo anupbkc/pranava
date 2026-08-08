@@ -7,6 +7,11 @@ const Aud = {
 
   init() {
     if (this.ctx) return;
+    // iOS: route Web Audio to the media channel so the ringer/silent
+    // switch does not mute the bells (Safari 16.4+)
+    if ('audioSession' in navigator) {
+      try { navigator.audioSession.type = 'playback'; } catch (e) {}
+    }
     const C = window.AudioContext || window.webkitAudioContext;
     this.ctx = new C();
     this.master = this.ctx.createGain();
@@ -21,6 +26,16 @@ const Aud = {
     this.ambGain.connect(this.master);
   },
   resume() { this.init(); if (this.ctx.state === 'suspended') this.ctx.resume(); },
+  /* must be called from inside a user gesture once — iOS unlocks audio
+     by playing a (silent) buffer synchronously within the tap */
+  unlock() {
+    this.resume();
+    try {
+      const b = this.ctx.createBuffer(1, 1, 22050);
+      const s = this.ctx.createBufferSource();
+      s.buffer = b; s.connect(this.ctx.destination); s.start(0);
+    } catch (e) {}
+  },
   suspend() { if (this.ctx && this.ctx.state === 'running') this.ctx.suspend(); },
   setAmbVol(v) { this.init(); this.ambGain.gain.value = v; },
 
