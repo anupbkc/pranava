@@ -191,6 +191,34 @@ input[type=checkbox]{width:19px;height:19px;accent-color:var(--violet)}
   padding:24px;
 }
 #session[hidden]{display:none}
+#btn-min{
+  position:absolute;top:calc(env(safe-area-inset-top) + 16px);right:20px;
+  width:42px;height:42px;border-radius:50%;border:1px solid var(--line);
+  background:rgba(185,167,230,.07);color:var(--ink-dim);font-size:1.1rem;cursor:pointer;
+}
+#chakra-orbs{position:absolute;inset:0;pointer-events:none}
+.orb{
+  position:absolute;width:13px;height:13px;margin:-6.5px 0 0 -6.5px;border-radius:50%;
+  background:var(--c);opacity:.15;transform:scale(.65);transition:all 1.4s ease;
+}
+.orb.lit{opacity:.9;transform:scale(1);box-shadow:0 0 10px var(--c),0 0 26px var(--c)}
+.orb.current{animation:orbpulse 3.2s ease-in-out infinite}
+@keyframes orbpulse{0%,100%{transform:scale(1)}50%{transform:scale(1.45)}}
+#s-mix{width:min(78vw,300px);margin-top:12px;display:flex;flex-direction:column;gap:6px}
+#s-mix label{display:flex;align-items:center;gap:12px;font-size:.68rem;letter-spacing:.22em;text-transform:uppercase;color:var(--ink-dim)}
+#s-mix span{width:72px;text-align:right}
+#s-mix input[type=range]{flex:1;width:auto}
+#mini{
+  position:fixed;left:50%;transform:translateX(-50%);
+  bottom:calc(env(safe-area-inset-bottom) + 90px);z-index:39;
+  display:flex;align-items:center;gap:9px;padding:10px 18px;border-radius:999px;
+  background:rgba(30,21,58,.85);border:1px solid rgba(233,220,198,.35);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  color:var(--beige);font-size:.85rem;cursor:pointer;
+  box-shadow:0 8px 30px rgba(10,6,26,.5);
+}
+#mini .mdot{width:8px;height:8px;border-radius:50%;background:var(--beige);animation:orbpulse 2.4s ease-in-out infinite}
+#mini #mini-name{color:var(--ink-dim);font-size:.75rem;letter-spacing:.08em}
 #s-phase{font-family:Georgia,serif;font-size:1.25rem;color:var(--beige);letter-spacing:.08em;text-align:center;min-height:1.6em}
 #s-total{font-size:.8rem;letter-spacing:.25em;color:var(--ink-dim)}
 .session-btns{display:flex;gap:14px;margin-top:26px}

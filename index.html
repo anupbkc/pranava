@@ -190,17 +190,26 @@
 
 <!-- ————— LIVE SESSION OVERLAY ————— -->
 <div id="session" hidden>
+  <button id="btn-min" aria-label="Back to app — session keeps playing">⌄</button>
   <div class="flower-wrap big">
     <div class="flower" id="flower-live"></div>
+    <div id="chakra-orbs" hidden></div>
     <div class="flower-center"><span id="s-center"></span><small id="s-center-sub"></small></div>
   </div>
   <div id="s-phase"></div>
   <div id="s-total"></div>
+  <div id="s-mix">
+    <label id="mix-voice-row"><span>Voice</span><input type="range" id="rng-voice" min="0" max="1" step="0.05" value="1"></label>
+    <label><span>Ambience</span><input type="range" id="rng-bg" min="0" max="1" step="0.05"></label>
+  </div>
   <div class="session-btns">
     <button id="btn-pause">Pause</button>
     <button id="btn-end">End</button>
   </div>
 </div>
+<button id="mini" hidden>
+  <span class="mdot"></span><span id="mini-time"></span><span id="mini-name"></span>
+</button>
 
 <script src="storage.js"></script>
 <script src="audio.js"></script>

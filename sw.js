@@ -1,5 +1,5 @@
 /* Pranava service worker — cache-first, fully offline. */
-const CACHE = 'pranava-v3';
+const CACHE = 'pranava-v5';
 const ASSETS = ['./', './index.html', './style.css', './app.js', './audio.js',
   './presets.js', './storage.js', './manifest.webmanifest', './icon.svg'];
 

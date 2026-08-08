@@ -32,9 +32,21 @@
       "name": "Seven Chakras",
       "desc": "Root to crown · colors & affirmations",
       "dur": 607,
+      "chakras": [0.08, 0.19, 0.29, 0.4, 0.5, 0.61, 0.72],
       "voices": {
         "Deep male": "guided/chakra7-male.m4a",
         "Female": "guided/chakra7-female.m4a"
+      }
+    },
+    {
+      "id": "sleep10",
+      "name": "Before Sleep",
+      "desc": "Let go of the day · drift into rest",
+      "dur": 561,
+      "soft": true,
+      "voices": {
+        "Deep male": "guided/sleep10-male.m4a",
+        "Female": "guided/sleep10-female.m4a"
       }
     }
   ]

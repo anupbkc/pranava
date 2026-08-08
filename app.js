@@ -321,9 +321,34 @@ document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible' && S.running && !S.wakeLock) grabWakeLock();
 });
 
-function showSession() { $('#session').hidden = false; }
+/* chakra orbs — rise along the left arc of the dial, root (bottom) to crown (top) */
+const CH_COLORS = ['#e0483c', '#f08c3a', '#f2c14e', '#58c08a', '#58a8dd', '#5a63c9', '#b28ae0'];
+function buildOrbs() {
+  const box = $('#chakra-orbs'); box.innerHTML = ''; box.hidden = false;
+  for (let i = 0; i < 7; i++) {
+    const a = i * Math.PI / 6;
+    const d = document.createElement('b');
+    d.className = 'orb';
+    d.style.left = (50 - 52 * Math.sin(a)) + '%';
+    d.style.top = (50 + 52 * Math.cos(a)) + '%';
+    d.style.setProperty('--c', CH_COLORS[i]);
+    box.appendChild(d);
+  }
+}
+function updateOrbs(frac) {
+  if (!S.marks) return;
+  const lit = S.marks.filter(m => frac >= m).length;
+  [...$('#chakra-orbs').children].forEach((o, i) => {
+    o.classList.toggle('lit', i < lit);
+    o.classList.toggle('current', i === lit - 1);
+  });
+}
+
+function showSession() { $('#session').hidden = false; $('#mini').hidden = true; }
 function hideSession() {
   $('#session').hidden = true;
+  $('#mini').hidden = true;
+  $('#chakra-orbs').hidden = true;
   const fl = $('#flower-live');
   fl.classList.remove('pulse', 'pump');
   fl.style.transform = ''; fl.style.transitionDuration = '';
@@ -341,8 +366,14 @@ function beginSession(mode, gSess, gUrl) {
   Aud.resume(); Aud.setAmbVol(cfg.ambVol);
   S.mode = mode; S.running = true; S.paused = false; S.ending = false;
   S.elapsedMs = 0; S.lastTickSec = -1; S.pi = -1; S.phaseEndMs = 0;
+  S.soft = false; S.marks = null;
+  $('#chakra-orbs').hidden = true;
   setProg(0);
   grabWakeLock(); showSession();
+  $('#mini-name').textContent = mode === 'guided' ? gSess.name : mode === 'breathe' ? findPreset(cfg.preset).name : 'Meditation';
+  $('#mix-voice-row').style.display = mode === 'guided' && gUrl ? '' : 'none';
+  $('#rng-voice').value = 1;
+  $('#rng-bg').value = cfg.ambVol;
   if (mode === 'meditate') {
     S.totalMs = cfg.dur * 60000;
     S.nextBellMin = cfg.intEvery || Infinity;
@@ -350,6 +381,9 @@ function beginSession(mode, gSess, gUrl) {
   } else if (mode === 'guided') {
     S.totalMs = gSess.dur * 1000;
     S.nextBellMin = Infinity;
+    S.soft = !!gSess.soft;
+    S.marks = gSess.chakras || null;
+    if (S.marks) buildOrbs();
     $('#s-phase').textContent = gSess.name;
     if (gUrl) {
       guidedAudio = new Audio(gUrl);
@@ -391,7 +425,12 @@ function tick() {
   if (!S.running || S.paused) return;
   S.elapsedMs = performance.now() - S.startAt;
   const left = S.totalMs > 0 ? S.totalMs - S.elapsedMs : Infinity;
-  if (S.totalMs > 0) setProg(S.elapsedMs / S.totalMs);
+  if (S.totalMs > 0) {
+    setProg(S.elapsedMs / S.totalMs);
+    updateOrbs(S.elapsedMs / S.totalMs);
+  }
+  if (!$('#mini').hidden) $('#mini-time').textContent =
+    S.totalMs > 0 ? fmt(S.totalMs - S.elapsedMs) : fmt(S.elapsedMs);
   if (S.mode !== 'breathe') {
     $('#s-center').textContent = S.totalMs > 0 ? fmt(left) : fmt(S.elapsedMs);
     $('#s-total').textContent = S.totalMs > 0 ? '' : 'open sitting';
@@ -449,6 +488,22 @@ $('#btn-pause').onclick = () => {
 };
 $('#btn-end').onclick = () => endSession(false);
 
+/* minimize — browse the app while the session keeps playing */
+$('#btn-min').onclick = () => {
+  $('#session').hidden = true;
+  $('#mini').hidden = false;
+  $('#mini-time').textContent = S.totalMs > 0 ? fmt(S.totalMs - S.elapsedMs) : fmt(S.elapsedMs);
+};
+$('#mini').onclick = () => showSession();
+
+/* live mix — voice & ambience volume during a session */
+$('#rng-voice').oninput = e => { if (guidedAudio) guidedAudio.volume = +e.target.value; };
+$('#rng-bg').oninput = e => {
+  cfg.ambVol = +e.target.value; saveCfg();
+  Aud.setAmbVol(cfg.ambVol);
+  $('#rng-amb').value = cfg.ambVol;
+};
+
 function endSession(completed) {
   if (S.ending) return;
   S.ending = true; S.running = false;
@@ -460,9 +515,10 @@ function endSession(completed) {
   const minutes = S.elapsedMs / 60000;
   logSession(S.mode, minutes);
   if (completed) {
-    // traditional triple closing bell
-    playBell(cfg.end); setTimeout(() => playBell(cfg.end, .8), 2600); setTimeout(() => playBell(cfg.end, .6), 5200);
-    $('#s-phase').textContent = '🙏 Session complete';
+    showSession();
+    if (S.soft) playBell(cfg.end, .15); // before-sleep: one whisper of a bell, nothing more
+    else { playBell(cfg.end); setTimeout(() => playBell(cfg.end, .8), 2600); setTimeout(() => playBell(cfg.end, .6), 5200); }
+    $('#s-phase').textContent = S.soft ? '🌙 Sleep well' : '🙏 Session complete';
     $('#s-center').textContent = fmt(S.elapsedMs);
     $('#s-center-sub').textContent = 'well done';
     $('#s-total').textContent = '';
