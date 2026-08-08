@@ -47,6 +47,22 @@ bgFlower.id = 'bg-flower';
 bgFlower.innerHTML = flowerSVG(640);
 document.body.prepend(bgFlower);
 
+/* ——— landing splash — pull up (or tap) to enter ——— */
+(() => {
+  const sp = $('#splash');
+  if (!sp) return;
+  let sy = null, gone = false;
+  const dismiss = () => {
+    if (gone) return; gone = true;
+    sp.classList.add('up');
+    setTimeout(() => sp.remove(), 850);
+  };
+  sp.addEventListener('touchstart', e => sy = e.touches[0].clientY, { passive: true });
+  sp.addEventListener('touchmove', e => { if (sy !== null && sy - e.touches[0].clientY > 55) dismiss(); }, { passive: true });
+  sp.addEventListener('wheel', e => { if (e.deltaY > 15) dismiss(); }, { passive: true });
+  sp.addEventListener('click', dismiss);
+})();
+
 /* ——— tabs ——— */
 $$('#tabs button').forEach(b => b.onclick = () => {
   $$('#tabs button').forEach(x => x.classList.toggle('active', x === b));
@@ -86,10 +102,18 @@ function startAmbience() {
   saveCfg(); playBell(e.target.value, .7);
 });
 $('#sel-int').value = String(cfg.intEvery);
-$('#sel-int').onchange = e => { cfg.intEvery = +e.target.value; saveCfg(); };
+$('#sel-int').onchange = e => {
+  cfg.intEvery = +e.target.value; saveCfg();
+  // running meditation: re-aim the next bell from where we are now
+  if (S.running && S.mode === 'meditate') {
+    const elMin = S.elapsedMs / 60000;
+    S.nextBellMin = cfg.intEvery ? (Math.floor(elMin / cfg.intEvery) + 1) * cfg.intEvery : Infinity;
+  }
+};
 [$('#sel-amb'), $('#sel-amb-b')].forEach(sel => sel.onchange = e => {
   cfg.amb = e.target.value; saveCfg();
   $('#sel-amb').value = cfg.amb; $('#sel-amb-b').value = cfg.amb;
+  if (S.running && !S.paused) startAmbience(); // takes effect mid-session
 });
 $('#rng-amb').value = cfg.ambVol;
 $('#rng-amb').oninput = e => { cfg.ambVol = +e.target.value; saveCfg(); Aud.setAmbVol(cfg.ambVol); };
@@ -150,8 +174,14 @@ function medLabel() {
   $('#med-dur-label').textContent = cfg.dur === 0 ? '∞' : cfg.dur;
   $('#med-dur-unit').textContent = cfg.dur === 0 ? 'open' : 'min';
 }
-renderChips($('#dur-chips'), MED_DURS, cfg.dur, v => { cfg.dur = v; saveCfg(); medLabel(); });
-renderChips($('#b-dur-chips'), B_DURS, cfg.bDur, v => { cfg.bDur = v; saveCfg(); });
+renderChips($('#dur-chips'), MED_DURS, cfg.dur, v => {
+  cfg.dur = v; saveCfg(); medLabel();
+  if (S.running && S.mode === 'meditate') S.totalMs = v * 60000; // retime live
+});
+renderChips($('#b-dur-chips'), B_DURS, cfg.bDur, v => {
+  cfg.bDur = v; saveCfg();
+  if (S.running && S.mode === 'breathe') S.totalMs = v * 60000;
+});
 medLabel();
 
 /* ——— breath presets ——— */

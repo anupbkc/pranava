@@ -33,6 +33,33 @@ main{padding-bottom:calc(env(safe-area-inset-bottom) + 128px)}
 }
 @keyframes slowspin{to{transform:rotate(360deg)}}
 
+/* landing splash */
+#splash{
+  position:fixed;inset:0;z-index:100;touch-action:none;
+  background:radial-gradient(120% 90% at 50% -10%, var(--bg2) 0%, var(--bg1) 45%, var(--bg0) 100%);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  transition:transform .75s cubic-bezier(.55,0,.3,1);cursor:pointer;
+}
+#splash.up{transform:translateY(-102%)}
+.sp-inner{text-align:center;animation:fade 1.2s ease}
+.sp-logo{width:min(38vw,160px);filter:drop-shadow(0 0 30px rgba(233,220,198,.4));animation:breathe 7s ease-in-out infinite}
+#splash h1{font-family:Georgia,serif;font-weight:400;font-size:2rem;letter-spacing:.55em;text-indent:.55em;color:var(--beige);margin-top:14px}
+.sp-tag{font-size:.72rem;letter-spacing:.4em;color:var(--ink-dim);text-transform:uppercase;margin-top:10px}
+.sp-giri{
+  position:absolute;bottom:calc(env(safe-area-inset-bottom) + 88px);
+  display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;opacity:.85;
+}
+.sp-giri img{width:44px;height:44px}
+.sp-giri span{font-size:.62rem;letter-spacing:.16em;line-height:1.8;color:var(--ink-dim);text-transform:uppercase}
+.sp-giri b{color:#C09040;font-weight:600}
+.sp-hint{
+  position:absolute;bottom:calc(env(safe-area-inset-bottom) + 26px);
+  display:flex;flex-direction:column;align-items:center;gap:0;
+  font-size:.66rem;letter-spacing:.3em;text-transform:uppercase;color:var(--ink-dim);
+}
+.sp-hint i{font-style:normal;font-size:1rem;color:var(--beige);animation:bob 2s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(3px);opacity:.5}50%{transform:translateY(-3px);opacity:1}}
+
 header{text-align:center;margin-bottom:4px}
 .logo{width:44px;height:auto;display:block;margin:0 auto 2px;filter:drop-shadow(0 0 14px rgba(233,220,198,.35))}
 h1{font-family:Georgia,'Times New Roman',serif;font-weight:400;font-size:1.28rem;letter-spacing:.55em;text-indent:.55em;color:var(--beige)}
