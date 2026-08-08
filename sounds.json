@@ -1,0 +1,18 @@
+{
+  "bells": [
+    { "id": "bowl11", "name": "Real Bowl · Deep", "file": "sounds/bowl-real-deep.m4a", "credit": "דג בלי מלח · Wikimedia Commons · CC BY-SA 4.0" },
+    { "id": "bowl45", "name": "Real Bowl · Small", "file": "sounds/bowl-real-small.m4a", "credit": "דג בלי מלח · Wikimedia Commons · CC BY-SA 4.0" },
+    { "id": "bowlsing", "name": "Real Bowl · Singing", "file": "sounds/bowl-real-singing.m4a", "credit": "Valera N. Trubin · Wikimedia Commons · CC BY 4.0" }
+  ],
+  "ambience": [
+    { "id": "rain", "name": "Real Rain", "file": "sounds/rain.m4a", "credit": "Nature Sounds · archive.org · CC0" },
+    { "id": "beach", "name": "Ocean Waves & Birds", "file": "sounds/beach.m4a", "credit": "Nature Sounds · archive.org · CC0" },
+    { "id": "birds", "name": "Forest Birdsong", "file": "sounds/birds.m4a", "credit": "Nature Sounds · archive.org · CC0" },
+    { "id": "stream", "name": "Mountain Stream", "file": "sounds/stream.m4a", "credit": "Nature Sounds · archive.org · CC0" },
+    { "id": "storm", "name": "Sea Storm", "file": "sounds/storm.m4a", "credit": "Nature Sounds · archive.org · CC0" },
+    { "id": "fol", "name": "Flower of Life · music", "file": "sounds/floweroflife.m4a", "credit": "archive.org · CC0" },
+    { "id": "glasswater", "name": "Meditation in Water · music", "file": "sounds/glasswater.m4a", "credit": "archive.org · CC0" },
+    { "id": "mantra", "name": "Baba Nam Kevalam · mantra", "file": "sounds/mantra.m4a", "credit": "archive.org · CC0" },
+    { "id": "soundbath", "name": "Sound Bath · deep frequencies", "file": "sounds/soundbath.m4a", "credit": "archive.org · Public Domain" }
+  ]
+}

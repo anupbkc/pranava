@@ -260,6 +260,23 @@ const Aud = {
     this.ambNodes = []; this.ambId = null;
   },
 
+  /* ——— library sounds (served from the repo, cached after first play) ——— */
+  async decodeUrl(url) {
+    this.init();
+    if (this.buffers[url]) return this.buffers[url];
+    const ab = await (await fetch(url)).arrayBuffer();
+    const buf = await this.ctx.decodeAudioData(ab);
+    this.buffers[url] = buf;
+    return buf;
+  },
+  async playUrl(url, vol = 1) {
+    this.resume();
+    const buf = await this.decodeUrl(url);
+    const s = this.ctx.createBufferSource(); s.buffer = buf;
+    const g = this.ctx.createGain(); g.gain.value = vol;
+    s.connect(g); g.connect(this.master); s.start();
+  },
+
   /* ——— imported sounds ——— */
   async decodeImported(id) {
     const key = 'imp:' + id;

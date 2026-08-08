@@ -224,8 +224,35 @@ input[type=checkbox]{width:19px;height:19px;accent-color:var(--violet)}
   width:42px;height:42px;border-radius:50%;border:1px solid var(--line);
   background:rgba(185,167,230,.07);color:var(--ink-dim);font-size:1.1rem;cursor:pointer;
 }
+/* session atmosphere — slow psychedelic aura, tinted by the active chakra */
+#session .aura{
+  position:absolute;width:75vmax;height:75vmax;border-radius:50%;
+  filter:blur(70px);opacity:.22;pointer-events:none;mix-blend-mode:screen;
+  transition:background 3s ease;
+}
+#session .a1{background:radial-gradient(circle,var(--aura,#8b74c8),transparent 62%);top:-22vmax;left:-22vmax;animation:drift1 26s ease-in-out infinite alternate}
+#session .a2{background:radial-gradient(circle,#a5cbe8,transparent 62%);bottom:-26vmax;right:-22vmax;animation:drift2 34s ease-in-out infinite alternate}
+@keyframes drift1{to{transform:translate(14vmax,9vmax) scale(1.18)}}
+@keyframes drift2{to{transform:translate(-11vmax,-7vmax) scale(1.12)}}
+/* mystic opening — the dial blooms into being on every session start */
+#session .flower-wrap{animation:bloom 1.7s cubic-bezier(.2,.7,.3,1)}
+@keyframes bloom{0%{transform:scale(.5);opacity:0;filter:blur(8px)}55%{opacity:1}100%{transform:scale(1);filter:blur(0)}}
+#session .flower-center span{animation:glowPulse 7s ease-in-out infinite}
+@keyframes glowPulse{0%,100%{text-shadow:0 0 22px rgba(233,220,198,.35)}50%{text-shadow:0 0 34px rgba(233,220,198,.7),0 0 60px rgba(139,116,200,.4)}}
+
 #chakra-orbs{position:absolute;inset:4%;pointer-events:none}
-#chakra-orbs svg{width:100%;height:100%}
+#chakra-orbs svg{width:100%;height:100%;overflow:visible}
+#chakra-orbs .mandala{transform-box:fill-box;transform-origin:center}
+#chakra-orbs .m1{animation:spinCW 70s linear infinite}
+#chakra-orbs .m2{animation:spinCCW 100s linear infinite}
+@keyframes spinCW{to{transform:rotate(360deg)}}
+@keyframes spinCCW{to{transform:rotate(-360deg)}}
+#chakra-orbs .halo{opacity:0;transform-box:fill-box;transform-origin:center}
+#chakra-orbs .halo.lit{animation:haloPulse 4.5s ease-out infinite}
+@keyframes haloPulse{0%{opacity:.55;transform:scale(.7)}80%{opacity:0;transform:scale(2.1)}100%{opacity:0;transform:scale(2.1)}}
+#chakra-orbs .spark{opacity:0;transform-box:fill-box}
+#chakra-orbs.flowing .spark{animation:rise linear infinite}
+@keyframes rise{0%{opacity:0;transform:translateY(0)}12%{opacity:.9}80%{opacity:.45}100%{opacity:0;transform:translateY(-156px)}}
 #chakra-orbs .orb{
   opacity:.14;transform:scale(.65);transition:all 1.4s ease;
   transform-box:fill-box;transform-origin:center;

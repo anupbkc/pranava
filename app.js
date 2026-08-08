@@ -76,11 +76,17 @@ $$('#tabs button').forEach(b => b.onclick = () => {
    imported sounds route by length: ≤45s → bells, >45s → ambience loops */
 const AMBIENT_MIN_SEC = 45;
 const isAmbient = s => s.dur > AMBIENT_MIN_SEC;
+let libSounds = { bells: [], ambience: [] };
+const libFind = id => libSounds.bells.concat(libSounds.ambience).find(s => s.id === id);
 function bellOptions() {
-  return BUILTIN_BELLS.concat(imported.filter(s => !isAmbient(s)).map(s => ['imp:' + s.id, s.name]));
+  return BUILTIN_BELLS
+    .concat(libSounds.bells.map(s => ['lib:' + s.id, s.name]))
+    .concat(imported.filter(s => !isAmbient(s)).map(s => ['imp:' + s.id, s.name]));
 }
 function ambOptions() {
-  return BUILTIN_AMB.concat(imported.filter(s => !s.dur || isAmbient(s)).map(s => ['imp:' + s.id, s.name + ' (loop)']));
+  return BUILTIN_AMB
+    .concat(libSounds.ambience.map(s => ['lib:' + s.id, s.name]))
+    .concat(imported.filter(s => !s.dur || isAmbient(s)).map(s => ['imp:' + s.id, s.name + ' (loop)']));
 }
 function fillSelect(sel, opts, val) {
   sel.innerHTML = opts.map(([v, l]) => `<option value="${v}">${l}</option>`).join('');
@@ -95,12 +101,17 @@ function refreshSelects() {
 }
 function playBell(id, vol = 1) {
   if (id.startsWith('imp:')) Aud.playImported(+id.slice(4), vol);
+  else if (id.startsWith('lib:')) { const s = libFind(id.slice(4)); s && Aud.playUrl(s.file, vol); }
   else Aud[id] && Aud[id](vol);
 }
 function startAmbience() {
   if (cfg.amb.startsWith('imp:')) {
     Aud.resume();
-    Aud.decodeImported(+cfg.amb.slice(4)).then(buf => buf && Aud.startAmbient('sample', buf));
+    Aud.decodeImported(+cfg.amb.slice(4)).then(buf => buf && Aud.startAmbient(cfg.amb, buf));
+  } else if (cfg.amb.startsWith('lib:')) {
+    Aud.resume();
+    const s = libFind(cfg.amb.slice(4));
+    s && Aud.decodeUrl(s.file).then(buf => Aud.startAmbient(cfg.amb, buf));
   } else Aud.startAmbient(cfg.amb);
 }
 ['sel-start', 'sel-end', 'sel-int-sound'].forEach(id => $('#' + id).onchange = e => {
@@ -289,6 +300,34 @@ function renderLibrary() {
     };
     ag.appendChild(b);
   });
+  const lg = $('#lib-grid');
+  if (lg) {
+    lg.innerHTML = '';
+    libSounds.bells.forEach(s => {
+      const b = document.createElement('button');
+      b.textContent = '▶ ' + s.name;
+      b.onclick = () => Aud.playUrl(s.file);
+      lg.appendChild(b);
+    });
+    libSounds.ambience.forEach(s => {
+      const b = document.createElement('button');
+      const key = 'lib:' + s.id;
+      b.textContent = '▶ ' + s.name;
+      b.onclick = async () => {
+        if (Aud.ambId === key) { Aud.stopAmbient(); b.classList.remove('on'); b.textContent = '▶ ' + s.name; }
+        else {
+          Aud.resume(); Aud.setAmbVol(cfg.ambVol);
+          const buf = await Aud.decodeUrl(s.file);
+          Aud.startAmbient(key, buf);
+          [...lg.children].forEach(x => x.classList.remove('on'));
+          b.classList.add('on'); b.textContent = '■ ' + s.name;
+        }
+      };
+      lg.appendChild(b);
+    });
+    const lc = $('#lib-credits');
+    if (lc) lc.textContent = 'Credits: ' + [...new Set(libSounds.bells.concat(libSounds.ambience).map(s => s.credit))].join(' · ');
+  }
   const il = $('#imported-list'); il.innerHTML = '';
   imported.forEach(s => {
     const d = document.createElement('div');
@@ -390,6 +429,9 @@ const CH_COLORS = ['#e0483c', '#f08c3a', '#f2c14e', '#58c08a', '#58a8dd', '#5a63
 const CH_Y = [178, 152, 128, 104, 78, 52, 26]; // root → crown along the spine
 function buildOrbs() {
   const box = $('#chakra-orbs'); box.hidden = false;
+  const sparks = Array.from({ length: 10 }, (_, i) =>
+    `<circle class="spark" cx="${93 + (i % 5) * 3.5}" cy="184" r="${1.2 + (i % 3) * 0.5}" fill="#e9dcc6"
+      style="animation-delay:${(i * 1.1).toFixed(1)}s;animation-duration:${(6.5 + (i % 4) * 1.8).toFixed(1)}s"/>`).join('');
   box.innerHTML = `<svg viewBox="0 0 200 216">
     <defs>
       <linearGradient id="beamg" x1="0" y1="1" x2="0" y2="0">
@@ -397,6 +439,8 @@ function buildOrbs() {
         <stop offset="1" stop-color="#e9dcc6" stop-opacity=".8"/>
       </linearGradient>
     </defs>
+    <circle class="mandala m1" cx="100" cy="106" r="97" fill="none" stroke="rgba(185,167,230,.28)" stroke-width="1" stroke-dasharray="2 7"/>
+    <circle class="mandala m2" cx="100" cy="106" r="90" fill="none" stroke="rgba(165,203,232,.2)" stroke-width="1" stroke-dasharray="1 11"/>
     <g fill="rgba(185,167,230,.06)" stroke="rgba(185,167,230,.38)" stroke-width="1.5" stroke-linejoin="round">
       <circle cx="100" cy="50" r="17"/>
       <path d="M100 67 C 126 78 140 100 143 132 Q 145 152 130 158 L 70 158 Q 55 152 57 132 C 60 100 74 78 100 67 Z"/>
@@ -405,18 +449,25 @@ function buildOrbs() {
       <path d="M133 96 C 148 116 152 138 142 154" fill="none" opacity=".7"/>
     </g>
     <rect id="chakra-beam" x="98.6" y="26" width="2.8" rx="1.4" height="152" fill="url(#beamg)" opacity=".6"/>
+    ${sparks}
+    ${CH_Y.map((y, i) => `<circle class="halo" cx="100" cy="${y}" r="11" fill="none" stroke="${CH_COLORS[i]}" stroke-width="1"/>`).join('')}
     ${CH_Y.map((y, i) => `<circle class="orb" cx="100" cy="${y}" r="6.5" fill="${CH_COLORS[i]}" style="--c:${CH_COLORS[i]}"/>`).join('')}
   </svg>`;
 }
 function updateOrbs(frac) {
   if (!S.marks) return;
   const lit = S.marks.filter(m => frac >= m).length;
-  [...$('#chakra-orbs').querySelectorAll('.orb')].forEach((o, i) => {
+  const box = $('#chakra-orbs');
+  [...box.querySelectorAll('.orb')].forEach((o, i) => {
     o.classList.toggle('lit', i < lit);
     o.classList.toggle('current', i === lit - 1);
   });
+  [...box.querySelectorAll('.halo')].forEach((h, i) => h.classList.toggle('lit', i < lit));
+  box.classList.toggle('flowing', lit > 0);
   const beam = $('#chakra-beam');
   if (beam) beam.style.transform = `scaleY(${lit ? (178 - CH_Y[lit - 1]) / 152 : 0})`;
+  // the atmosphere breathes in the color of the awakened center
+  $('#session').style.setProperty('--aura', lit ? CH_COLORS[lit - 1] : '#8b74c8');
 }
 
 function showSession() { $('#session').hidden = false; $('#mini').hidden = true; }
@@ -682,9 +733,15 @@ const APP_VERSION = 'v8';
   };
 })();
 
+async function loadSoundLib() {
+  try { libSounds = await (await fetch('sounds.json')).json(); } catch (e) {}
+  refreshSelects(); renderLibrary();
+}
+
 /* ——— boot ——— */
 refreshSelects();
 loadImported();
 loadGuided();
+loadSoundLib();
 if ('serviceWorker' in navigator && location.protocol !== 'file:')
   addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
