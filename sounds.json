@@ -2,7 +2,11 @@
   "bells": [
     { "id": "bowl11", "name": "Real Bowl · Deep", "file": "sounds/bowl-real-deep.m4a", "credit": "דג בלי מלח · Wikimedia Commons · CC BY-SA 4.0" },
     { "id": "bowl45", "name": "Real Bowl · Small", "file": "sounds/bowl-real-small.m4a", "credit": "דג בלי מלח · Wikimedia Commons · CC BY-SA 4.0" },
-    { "id": "bowlsing", "name": "Real Bowl · Singing", "file": "sounds/bowl-real-singing.m4a", "credit": "Valera N. Trubin · Wikimedia Commons · CC BY 4.0" }
+    { "id": "bowlsing", "name": "Real Bowl · Singing", "file": "sounds/bowl-real-singing.m4a", "credit": "Valera N. Trubin · Wikimedia Commons · CC BY 4.0" },
+    { "id": "templebell", "name": "Temple Bell · Bonshō", "file": "sounds/templebell-real.m4a", "credit": "Jnn · Wikimedia Commons · CC BY 2.1 JP" },
+    { "id": "gongreal", "name": "Real Gong · Chinese", "file": "sounds/gong-real.m4a", "credit": "the_very_Real_Horst · Wikimedia Commons · CC0" },
+    { "id": "tingbig", "name": "Real Tingsha · Big", "file": "sounds/tingsha-real-big.m4a", "credit": "Wikimedia Commons · CC0" },
+    { "id": "tingsmall", "name": "Real Tingsha · Small", "file": "sounds/tingsha-real-small.m4a", "credit": "Wikimedia Commons · CC0" }
   ],
   "ambience": [
     { "id": "rain", "name": "Real Rain", "file": "sounds/rain.m4a", "credit": "Nature Sounds · archive.org · CC0" },

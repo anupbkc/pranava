@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Pranava — Meditation & Breathwork Timer</title>
 <meta name="theme-color" content="#14102a">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icon.svg">
@@ -167,6 +168,11 @@
     <div class="card">
       <h3>Ambience</h3>
       <div class="sound-grid" id="amb-grid"></div>
+      <label class="row" style="margin-top:8px">
+        <span>Ambience volume</span>
+        <input type="range" id="rng-lib" min="0" max="1" step="0.05">
+        <em class="pct" id="lib-pct"></em>
+      </label>
     </div>
     <div class="card">
       <h3>Sound library <small>· free & license-clean</small></h3>

@@ -1,5 +1,8 @@
 /* Pranava — UI wiring, meditation timer & breathwork engine. */
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+/* escape everything user-controlled before it touches innerHTML (XSS guard) */
+const esc = s => String(s).replace(/[&<>"']/g, c =>
+  ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const store = {
   get: (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } },
   set: (k, v) => localStorage.setItem(k, JSON.stringify(v)),
@@ -65,6 +68,12 @@ document.body.prepend(bgFlower);
 /* iOS audio unlock — must happen inside the first real touch */
 ['touchend', 'click'].forEach(ev =>
   document.addEventListener(ev, () => Aud.unlock(), { once: true, capture: true }));
+/* and stay resilient: any later tap revives a suspended/interrupted context */
+['touchend', 'click'].forEach(ev =>
+  document.addEventListener(ev, () => { if (Aud.ctx && Aud.ctx.state !== 'running') Aud.ctx.resume(); }, { capture: true }));
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && S.running && !S.paused) Aud.resume();
+});
 
 /* ——— tabs ——— */
 $$('#tabs button').forEach(b => b.onclick = () => {
@@ -89,7 +98,7 @@ function ambOptions() {
     .concat(imported.filter(s => !s.dur || isAmbient(s)).map(s => ['imp:' + s.id, s.name + ' (loop)']));
 }
 function fillSelect(sel, opts, val) {
-  sel.innerHTML = opts.map(([v, l]) => `<option value="${v}">${l}</option>`).join('');
+  sel.innerHTML = opts.map(([v, l]) => `<option value="${esc(v)}">${esc(l)}</option>`).join('');
   if (opts.some(([v]) => v === val)) sel.value = val;
 }
 function refreshSelects() {
@@ -104,14 +113,15 @@ function playBell(id, vol = 1) {
   else if (id.startsWith('lib:')) { const s = libFind(id.slice(4)); s && Aud.playUrl(s.file, vol); }
   else Aud[id] && Aud[id](vol);
 }
-function startAmbience() {
+function startAmbience(tok) {
+  const fresh = () => tok === undefined || tok === ambToken || S.running;
   if (cfg.amb.startsWith('imp:')) {
     Aud.resume();
-    Aud.decodeImported(+cfg.amb.slice(4)).then(buf => buf && Aud.startAmbient(cfg.amb, buf));
+    Aud.decodeImported(+cfg.amb.slice(4)).then(buf => buf && fresh() && Aud.startAmbient(cfg.amb, buf));
   } else if (cfg.amb.startsWith('lib:')) {
     Aud.resume();
     const s = libFind(cfg.amb.slice(4));
-    s && Aud.decodeUrl(s.file).then(buf => Aud.startAmbient(cfg.amb, buf));
+    s && Aud.decodeUrl(s.file).then(buf => fresh() && Aud.startAmbient(cfg.amb, buf));
   } else Aud.startAmbient(cfg.amb);
 }
 ['sel-start', 'sel-end', 'sel-int-sound'].forEach(id => $('#' + id).onchange = e => {
@@ -127,16 +137,17 @@ $('#sel-int').onchange = e => {
     S.nextBellMin = cfg.intEvery ? (Math.floor(elMin / cfg.intEvery) + 1) * cfg.intEvery : Infinity;
   }
 };
-let ambPrevT = null;
+let ambPrevT = null, ambToken = 0;
 [$('#sel-amb'), $('#sel-amb-b')].forEach(sel => sel.onchange = e => {
   cfg.amb = e.target.value; saveCfg();
   $('#sel-amb').value = cfg.amb; $('#sel-amb-b').value = cfg.amb;
-  if (S.running && !S.paused) startAmbience(); // takes effect mid-session
+  const tok = ++ambToken; // a newer selection or expired preview cancels this one
+  if (S.running && !S.paused) startAmbience(tok);
   else {
     // not in a session: play a short preview so the choice is audible
-    Aud.setAmbVol(cfg.ambVol); startAmbience();
+    Aud.setAmbVol(cfg.ambVol); startAmbience(tok);
     clearTimeout(ambPrevT);
-    ambPrevT = setTimeout(() => { if (!S.running) Aud.stopAmbient(); }, 6000);
+    ambPrevT = setTimeout(() => { ambToken++; if (!S.running) Aud.stopAmbient(); }, 8000);
   }
 });
 
@@ -144,15 +155,16 @@ let ambPrevT = null;
 function setAmbVolume(v, skipEl) {
   cfg.ambVol = v; saveCfg();
   Aud.setAmbVol(v);
-  [$('#rng-amb'), $('#rng-bg')].forEach(el => { if (el && el !== skipEl) el.value = v; });
+  [$('#rng-amb'), $('#rng-bg'), $('#rng-lib')].forEach(el => { if (el && el !== skipEl) el.value = v; });
   const pct = Math.round(v * 100) + '%';
-  const a = $('#amb-pct'), b = $('#bg-pct');
-  if (a) a.textContent = pct;
-  if (b) b.textContent = pct;
+  ['#amb-pct', '#bg-pct', '#lib-pct'].forEach(sel => { const el = $(sel); if (el) el.textContent = pct; });
 }
 $('#rng-amb').value = cfg.ambVol;
+$('#rng-lib').value = cfg.ambVol;
 $('#amb-pct').textContent = Math.round(cfg.ambVol * 100) + '%';
+$('#lib-pct').textContent = Math.round(cfg.ambVol * 100) + '%';
 $('#rng-amb').oninput = e => setAmbVolume(+e.target.value, e.target);
+$('#rng-lib').oninput = e => setAmbVolume(+e.target.value, e.target);
 $('#chk-cues').checked = cfg.cues;
 $('#chk-cues').onchange = e => { cfg.cues = e.target.checked; saveCfg(); };
 $('#chk-voice').checked = cfg.voice;
@@ -232,8 +244,8 @@ function renderPresets() {
   allPresets().forEach(p => {
     const d = document.createElement('div');
     d.className = 'preset' + (p.id === cfg.preset ? ' active' : '');
-    const bars = p.cycle.map(ph => `<span class="pb ${ph.a}" style="flex:${ph.t}"></span>`).join('');
-    d.innerHTML = `<div class="pmain"><b>${p.name}</b><i>${p.hint || cycleSummary(p)}</i><div class="pbar">${bars}</div></div><div class="acts"></div>`;
+    const bars = p.cycle.map(ph => `<span class="pb ${esc(ph.a)}" style="flex:${+ph.t || 1}"></span>`).join('');
+    d.innerHTML = `<div class="pmain"><b>${esc(p.name)}</b><i>${esc(p.hint || cycleSummary(p))}</i><div class="pbar">${bars}</div></div><div class="acts"></div>`;
     d.onclick = () => { cfg.preset = p.id; saveCfg(); renderPresets(); };
     const acts = d.querySelector('.acts');
     const mk = (txt, fn, title) => {
@@ -260,8 +272,8 @@ const CUE_OPTS = [['in', 'Inhale'], ['out', 'Exhale'], ['hold', 'Hold'], ['hum',
 function builderRow(l = '', t = 4, a = 'in') {
   const d = document.createElement('div');
   d.className = 'brow';
-  d.innerHTML = `<input type="text" placeholder="Label (e.g. Inhale left)" value="${l}">
-    <input type="number" min="1" max="600" value="${t}">
+  d.innerHTML = `<input type="text" placeholder="Label (e.g. Inhale left)" value="${esc(l)}">
+    <input type="number" min="1" max="600" value="${+t || 4}">
     <select>${CUE_OPTS.map(([v, n]) => `<option value="${v}"${v === a ? ' selected' : ''}>${n}</option>`).join('')}</select>
     <button class="del">✕</button>`;
   d.querySelector('.del').onclick = () => d.remove();
@@ -325,7 +337,11 @@ function renderLibrary() {
     libSounds.bells.forEach(s => {
       const b = document.createElement('button');
       b.textContent = '▶ ' + s.name;
-      b.onclick = () => Aud.playUrl(s.file);
+      b.onclick = async () => {
+        b.textContent = '⏳ ' + s.name; // show the download, silence ≠ broken
+        try { await Aud.playUrl(s.file); } catch (e) { alert('Could not load ' + s.name); }
+        b.textContent = '▶ ' + s.name;
+      };
       lg.appendChild(b);
     });
     libSounds.ambience.forEach(s => {
@@ -336,10 +352,13 @@ function renderLibrary() {
         if (Aud.ambId === key) { Aud.stopAmbient(); b.classList.remove('on'); b.textContent = '▶ ' + s.name; }
         else {
           Aud.resume(); Aud.setAmbVol(cfg.ambVol);
-          const buf = await Aud.decodeUrl(s.file);
-          Aud.startAmbient(key, buf);
-          [...lg.children].forEach(x => x.classList.remove('on'));
-          b.classList.add('on'); b.textContent = '■ ' + s.name;
+          b.textContent = '⏳ ' + s.name;
+          try {
+            const buf = await Aud.decodeUrl(s.file);
+            Aud.startAmbient(key, buf);
+            [...lg.children].forEach(x => { x.classList.remove('on'); if (x.textContent[0] === '■') x.textContent = '▶ ' + x.textContent.slice(2); });
+            b.classList.add('on'); b.textContent = '■ ' + s.name;
+          } catch (e) { b.textContent = '▶ ' + s.name; alert('Could not load ' + s.name); }
         }
       };
       lg.appendChild(b);
@@ -352,7 +371,7 @@ function renderLibrary() {
     const d = document.createElement('div');
     d.className = 'imp';
     const tag = s.dur ? (isAmbient(s) ? ' · ambience' : ' · bell') : '';
-    d.innerHTML = `<span>${s.name}<small style="color:var(--ink-dim)">${tag}</small></span><span></span>`;
+    d.innerHTML = `<span>${esc(s.name)}<small style="color:var(--ink-dim)">${tag}</small></span><span></span>`;
     const span = d.lastElementChild;
     const play = document.createElement('button');
     play.textContent = '▶'; play.onclick = () => Aud.playImported(s.id);
@@ -699,11 +718,11 @@ async function loadGuided() {
       const d = document.createElement('div');
       d.className = 'gitem';
       const mins = Math.round(s.dur / 60);
-      d.innerHTML = `<div class="gmain"><b>${s.name}</b><i>${s.desc} · ${mins} min</i></div>`;
+      d.innerHTML = `<div class="gmain"><b>${esc(s.name)}</b><i>${esc(s.desc)} · ${mins} min</i></div>`;
       let voiceSel = null;
       if (s.voices) {
         voiceSel = document.createElement('select');
-        voiceSel.innerHTML = Object.keys(s.voices).map(k => `<option>${k}</option>`).join('');
+        voiceSel.innerHTML = Object.keys(s.voices).map(k => `<option>${esc(k)}</option>`).join('');
         d.appendChild(voiceSel);
       }
       const play = document.createElement('button');
@@ -768,4 +787,5 @@ loadImported();
 loadGuided();
 loadSoundLib();
 if ('serviceWorker' in navigator && location.protocol !== 'file:')
-  addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+  addEventListener('load', () =>
+    navigator.serviceWorker.register('sw.js').then(reg => reg.update()).catch(() => {}));
