@@ -100,6 +100,15 @@
         <select id="sel-end"></select>
       </label>
       <label class="row">
+        <span>Closing chime</span>
+        <select id="sel-endmode">
+          <option value="1">Once</option>
+          <option value="3">3 chimes</option>
+          <option value="5">5 chimes</option>
+          <option value="wake">Gentle wake · rising</option>
+        </select>
+      </label>
+      <label class="row">
         <span>Ambience</span>
         <select id="sel-amb"></select>
       </label>
@@ -252,6 +261,7 @@
   </div>
   <div class="session-btns">
     <button id="btn-pause">Pause</button>
+    <button id="btn-restart">Restart</button>
     <button id="btn-end">End</button>
   </div>
 </div>

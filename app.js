@@ -10,6 +10,7 @@ const store = {
 const cfg = Object.assign({
   dur: 15, start: 'bowl', end: 'gong', intEvery: 0, intSound: 'bell',
   amb: 'none', ambVol: 0.5, bDur: 5, preset: 'anulom', voice: true, cues: true,
+  endMode: '3',
 }, store.get('pranava.cfg', {}));
 const saveCfg = () => store.set('pranava.cfg', cfg);
 
@@ -113,6 +114,29 @@ function playBell(id, vol = 1) {
   else if (id.startsWith('lib:')) { const s = libFind(id.slice(4)); s && Aud.playUrl(s.file, vol); }
   else Aud[id] && Aud[id](vol);
 }
+
+/* closing chime — one, several, or a gentle rising wake so a low-volume
+   gong is never missed. Returns roughly how long the sequence lasts (ms). */
+let closeTimers = [];
+function stopClosing() { closeTimers.forEach(clearTimeout); closeTimers = []; }
+function playClosing(preview) {
+  stopClosing();
+  Aud.resume();
+  const mode = cfg.endMode || '3';
+  let count, gap, rising;
+  if (mode === '1') { count = 1; gap = 0; rising = false; }
+  else if (mode === '5') { count = 5; gap = 2600; rising = false; }
+  else if (mode === 'wake') { count = 7; gap = 3200; rising = true; }
+  else { count = 3; gap = 2600; rising = false; }
+  if (preview && mode === 'wake') { count = 4; gap = 1400; } // shorter taste when auditioning
+  for (let i = 0; i < count; i++) {
+    const vol = rising
+      ? Math.min(1, 0.3 + i * (0.7 / Math.max(1, count - 1)))  // start soft, swell louder
+      : (i === 0 ? 1 : 0.8);
+    closeTimers.push(setTimeout(() => playBell(cfg.end, vol), i * gap));
+  }
+  return (count - 1) * gap + 3000;
+}
 function startAmbience(tok) {
   const fresh = () => tok === undefined || tok === ambToken || S.running;
   if (cfg.amb.startsWith('imp:')) {
@@ -128,6 +152,11 @@ function startAmbience(tok) {
   cfg[{ 'sel-start': 'start', 'sel-end': 'end', 'sel-int-sound': 'intSound' }[id]] = e.target.value;
   saveCfg(); playBell(e.target.value, .7);
 });
+$('#sel-endmode').value = cfg.endMode;
+$('#sel-endmode').onchange = e => {
+  cfg.endMode = e.target.value; saveCfg();
+  playClosing(true); // preview the chosen chime pattern
+};
 $('#sel-int').value = String(cfg.intEvery);
 $('#sel-int').onchange = e => {
   cfg.intEvery = +e.target.value; saveCfg();
@@ -529,6 +558,8 @@ function setFlower(scale, seconds) {
 
 let guidedAudio = null;
 function beginSession(mode, gSess, gUrl) {
+  S.lastBegin = { mode, gSess, gUrl }; // for Restart
+  stopClosing();
   Aud.resume(); Aud.setAmbVol(cfg.ambVol);
   S.mode = mode; S.running = true; S.paused = false; S.ending = false;
   S.elapsedMs = 0; S.lastTickSec = -1; S.pi = -1; S.phaseEndMs = 0;
@@ -575,12 +606,13 @@ function beginSession(mode, gSess, gUrl) {
   let prep = 5;
   $('#s-center').textContent = prep;
   $('#s-center-sub').textContent = 'settle in';
-  const prepTimer = setInterval(() => {
-    if (!S.running) { clearInterval(prepTimer); return; }
+  clearInterval(S.prepTimer);
+  S.prepTimer = setInterval(() => {
+    if (!S.running) { clearInterval(S.prepTimer); return; }
     if (S.paused) return;
     prep--;
     if (prep > 0) { $('#s-center').textContent = prep; return; }
-    clearInterval(prepTimer);
+    clearInterval(S.prepTimer);
     $('#s-center-sub').textContent = '';
     if (mode === 'meditate') $('#s-phase').textContent = '';
     if (S.marks) { $('#s-center').style.display = 'none'; $('#session').classList.add('chakra-mode'); }
@@ -662,6 +694,23 @@ $('#btn-pause').onclick = () => {
 };
 $('#btn-end').onclick = () => endSession(false);
 
+/* restart — begin the same session over from the top */
+$('#btn-restart').onclick = () => {
+  if (!S.lastBegin) return;
+  clearTimeout(S.doneTO);
+  clearInterval(S.timer);
+  clearInterval(S.prepTimer);
+  stopClosing();
+  speechSynthesis && speechSynthesis.cancel();
+  if (guidedAudio) { guidedAudio.pause(); guidedAudio = null; }
+  Aud.stopAmbient();
+  if (S.wakeLock) { S.wakeLock.release().catch(() => {}); S.wakeLock = null; }
+  S.ending = false; S.running = false; S.paused = false;
+  $('#btn-pause').textContent = 'Pause';
+  const lb = S.lastBegin;
+  beginSession(lb.mode, lb.gSess, lb.gUrl);
+};
+
 /* minimize — browse the app while the session keeps playing */
 $('#btn-min').onclick = () => {
   $('#session').hidden = true;
@@ -683,6 +732,7 @@ function endSession(completed) {
   if (S.ending) return;
   S.ending = true; S.running = false;
   clearInterval(S.timer);
+  clearInterval(S.prepTimer);
   speechSynthesis && speechSynthesis.cancel();
   if (guidedAudio) { guidedAudio.pause(); guidedAudio = null; }
   Aud.stopAmbient();
@@ -691,15 +741,18 @@ function endSession(completed) {
   logSession(S.mode, minutes);
   if (completed) {
     showSession();
+    let closeMs = 7000;
     if (S.soft) playBell(cfg.end, .15); // before-sleep: one whisper of a bell, nothing more
-    else { playBell(cfg.end); setTimeout(() => playBell(cfg.end, .8), 2600); setTimeout(() => playBell(cfg.end, .6), 5200); }
+    else closeMs = playClosing();       // configurable chime / gentle rising wake
     $('#s-phase').textContent = S.soft ? '🌙 Sleep well' : '🙏 Session complete';
+    $('#s-center').style.display = '';
     $('#s-center').textContent = fmt(S.elapsedMs);
     $('#s-center-sub').textContent = 'well done';
     $('#s-total').textContent = '';
     setFlower(1, 3);
-    S.doneTO = setTimeout(hideSession, 7000);
+    S.doneTO = setTimeout(hideSession, Math.max(7000, closeMs + 4000));
   } else {
+    stopClosing();
     playBell(cfg.end, .5);
     hideSession();
   }

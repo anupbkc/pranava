@@ -314,9 +314,9 @@ input[type=checkbox]{width:19px;height:19px;accent-color:var(--violet)}
 #giri b{color:#C09040;font-weight:600}
 #s-phase{font-family:Georgia,serif;font-size:1.25rem;color:var(--beige);letter-spacing:.08em;text-align:center;min-height:1.6em}
 #s-total{font-size:.8rem;letter-spacing:.25em;color:var(--ink-dim)}
-.session-btns{display:flex;gap:14px;margin-top:26px}
+.session-btns{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-top:26px}
 .session-btns button{
   background:none;border:1px solid var(--line);color:var(--ink-dim);
-  padding:11px 28px;border-radius:999px;font-size:.85rem;letter-spacing:.15em;text-transform:uppercase;cursor:pointer;
+  padding:11px 22px;border-radius:999px;font-size:.82rem;letter-spacing:.13em;text-transform:uppercase;cursor:pointer;
 }
 .session-btns button:active{color:var(--beige);border-color:var(--beige)}
