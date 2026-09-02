@@ -164,8 +164,23 @@ const Aud = {
     o.connect(f); o2.connect(f); f.connect(g); g.connect(this.master);
     o.start(t); o2.start(t); o.stop(t + dur); o2.stop(t + dur);
   },
+  _voiceReady: false,
+  /* iOS blocks speech that isn't started inside a user gesture, and drops
+     timer-driven speech unless the engine was 'unlocked' once during a tap.
+     Speak a silent utterance inside the Begin tap to unlock the session. */
+  primeVoice() {
+    if (!('speechSynthesis' in window)) return;
+    try {
+      speechSynthesis.resume();
+      const u = new SpeechSynthesisUtterance(' ');
+      u.volume = 0;
+      speechSynthesis.speak(u);
+      this._voiceReady = true;
+    } catch (e) {}
+  },
   voice(text, voiceName) {
     if (!('speechSynthesis' in window)) return;
+    try { speechSynthesis.resume(); } catch (e) {} // iOS auto-pauses; wake it
     speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text);
     if (voiceName) {

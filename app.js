@@ -66,9 +66,9 @@ document.body.prepend(bgFlower);
   sp.addEventListener('wheel', e => { if (e.deltaY > 15) dismiss(); }, { passive: true });
   sp.addEventListener('click', dismiss);
 })();
-/* iOS audio unlock — must happen inside the first real touch */
+/* iOS audio + speech unlock — must happen inside the first real touch */
 ['touchend', 'click'].forEach(ev =>
-  document.addEventListener(ev, () => Aud.unlock(), { once: true, capture: true }));
+  document.addEventListener(ev, () => { Aud.unlock(); Aud.primeVoice(); }, { once: true, capture: true }));
 /* and stay resilient: any later tap revives a suspended/interrupted context */
 ['touchend', 'click'].forEach(ev =>
   document.addEventListener(ev, () => { if (Aud.ctx && Aud.ctx.state !== 'running') Aud.ctx.resume(); }, { capture: true }));
@@ -592,6 +592,7 @@ function beginSession(mode, gSess, gUrl) {
   S.lastBegin = { mode, gSess, gUrl }; // for Restart
   stopClosing();
   Aud.resume(); Aud.setAmbVol(cfg.ambVol);
+  if (cfg.voice) Aud.primeVoice(); // unlock iOS speech inside this Begin tap
   S.mode = mode; S.running = true; S.paused = false; S.ending = false;
   S.elapsedMs = 0; S.lastTickSec = -1; S.pi = -1; S.phaseEndMs = 0;
   S.soft = false; S.marks = null;
