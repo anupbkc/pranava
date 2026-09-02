@@ -14,7 +14,9 @@
       "dur": 323,
       "voices": {
         "Deep male": "guided/ground5-male.m4a",
-        "Female": "guided/ground5-female.m4a"
+        "Female": "guided/ground5-female.m4a",
+        "Anup": "guided/ground5-anup.m4a",
+        "Friend": "guided/ground5-friend.m4a"
       }
     },
     {
@@ -24,7 +26,9 @@
       "dur": 369,
       "voices": {
         "Deep male": "guided/kundalini-male.m4a",
-        "Female": "guided/kundalini-female.m4a"
+        "Female": "guided/kundalini-female.m4a",
+        "Anup": "guided/kundalini-anup.m4a",
+        "Friend": "guided/kundalini-friend.m4a"
       }
     },
     {
@@ -35,7 +39,9 @@
       "chakras": [0.08, 0.19, 0.29, 0.4, 0.5, 0.61, 0.72],
       "voices": {
         "Deep male": "guided/chakra7-male.m4a",
-        "Female": "guided/chakra7-female.m4a"
+        "Female": "guided/chakra7-female.m4a",
+        "Anup": "guided/chakra7-anup.m4a",
+        "Friend": "guided/chakra7-friend.m4a"
       }
     },
     {
@@ -46,7 +52,9 @@
       "soft": true,
       "voices": {
         "Deep male": "guided/sleep10-male.m4a",
-        "Female": "guided/sleep10-female.m4a"
+        "Female": "guided/sleep10-female.m4a",
+        "Anup": "guided/sleep10-anup.m4a",
+        "Friend": "guided/sleep10-friend.m4a"
       }
     }
   ]

@@ -811,7 +811,15 @@ async function loadGuided() {
       }
       const play = document.createElement('button');
       play.className = 'gplay'; play.textContent = '▶';
-      play.onclick = () => beginSession('guided', s, s.voices ? s.voices[voiceSel.value] : null);
+      play.onclick = async () => {
+        const url = s.voices ? s.voices[voiceSel.value] : null;
+        if (url) {
+          // a pre-wired voice whose recording isn't uploaded yet → friendly note
+          try { const r = await fetch(url, { method: 'HEAD' }); if (!r.ok) { alert('“' + voiceSel.value + '” isn’t recorded yet — coming soon 🎙️'); return; } }
+          catch (e) { /* offline/network: let Audio try the cache */ }
+        }
+        beginSession('guided', s, url);
+      };
       d.appendChild(play);
       list.appendChild(d);
     });
