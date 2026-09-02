@@ -95,8 +95,16 @@ function bellOptions() {
 }
 function ambOptions() {
   return BUILTIN_AMB
+    .concat(HEALING.map(h => ['heal:' + h.id, h.name]))
     .concat(libSounds.ambience.map(s => ['lib:' + s.id, s.name]))
     .concat(imported.filter(s => !s.dur || isAmbient(s)).map(s => ['imp:' + s.id, s.name + ' (loop)']));
+}
+/* reset the play/stop state of every ambience grid button */
+function clearAmbButtons() {
+  ['#amb-grid', '#lib-grid', '#heal-grid'].forEach(sel => {
+    const g = $(sel); if (!g) return;
+    [...g.children].forEach(x => { x.classList.remove('on'); if (x.textContent[0] === '■') x.textContent = '▶ ' + x.textContent.slice(2); });
+  });
 }
 function fillSelect(sel, opts, val) {
   sel.innerHTML = opts.map(([v, l]) => `<option value="${esc(v)}">${esc(l)}</option>`).join('');
@@ -146,6 +154,9 @@ function startAmbience(tok) {
     Aud.resume();
     const s = libFind(cfg.amb.slice(4));
     s && Aud.decodeUrl(s.file).then(buf => fresh() && Aud.startAmbient(cfg.amb, buf));
+  } else if (cfg.amb.startsWith('heal:')) {
+    const h = healFind(cfg.amb.slice(5));
+    if (h) { Aud.resume(); Aud.startHealing(h); }
   } else Aud.startAmbient(cfg.amb);
 }
 ['sel-start', 'sel-end', 'sel-int-sound'].forEach(id => $('#' + id).onchange = e => {
@@ -354,7 +365,7 @@ function renderLibrary() {
       if (Aud.ambId === id) { Aud.stopAmbient(); b.classList.remove('on'); b.textContent = '▶ ' + name; }
       else {
         Aud.setAmbVol(cfg.ambVol); Aud.startAmbient(id);
-        $$('#amb-grid button').forEach(x => { x.classList.remove('on'); x.textContent = '▶ ' + x.textContent.slice(2); });
+        clearAmbButtons();
         b.classList.add('on'); b.textContent = '■ ' + name;
       }
     };
@@ -385,7 +396,7 @@ function renderLibrary() {
           try {
             const buf = await Aud.decodeUrl(s.file);
             Aud.startAmbient(key, buf);
-            [...lg.children].forEach(x => { x.classList.remove('on'); if (x.textContent[0] === '■') x.textContent = '▶ ' + x.textContent.slice(2); });
+            clearAmbButtons();
             b.classList.add('on'); b.textContent = '■ ' + s.name;
           } catch (e) { b.textContent = '▶ ' + s.name; alert('Could not load ' + s.name); }
         }
@@ -394,6 +405,26 @@ function renderLibrary() {
     });
     const lc = $('#lib-credits');
     if (lc) lc.textContent = 'Credits: ' + [...new Set(libSounds.bells.concat(libSounds.ambience).map(s => s.credit))].join(' · ');
+  }
+  const hg = $('#heal-grid');
+  if (hg) {
+    hg.innerHTML = '';
+    HEALING.forEach(h => {
+      const b = document.createElement('button');
+      const key = 'heal:' + h.id;
+      if (h.group === 'binaural') b.classList.add('bin');
+      b.textContent = '▶ ' + h.name;
+      b.onclick = () => {
+        if (Aud.ambId === key) { Aud.stopAmbient(); clearAmbButtons(); }
+        else {
+          Aud.resume(); Aud.setAmbVol(cfg.ambVol);
+          Aud.startHealing(h);
+          clearAmbButtons();
+          b.classList.add('on'); b.textContent = '■ ' + h.name;
+        }
+      };
+      hg.appendChild(b);
+    });
   }
   const il = $('#imported-list'); il.innerHTML = '';
   imported.forEach(s => {

@@ -8,7 +8,7 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="icon.svg">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -184,6 +184,11 @@
       </label>
     </div>
     <div class="card">
+      <h3>Healing frequencies <small>· synthesized · Solfeggio & binaural</small></h3>
+      <div class="sound-grid" id="heal-grid"></div>
+      <p class="hint" style="margin-top:10px">Solfeggio tones play on any speaker. Binaural beats (Delta · Theta · Alpha) need <b>headphones</b> to take effect — the brainwave pulse forms from the difference between your two ears. These are relaxation and meditation aids, not medical treatment.</p>
+    </div>
+    <div class="card">
       <h3>Sound library <small>· free & license-clean</small></h3>
       <div class="sound-grid" id="lib-grid"></div>
       <p class="hint" id="lib-credits" style="margin-top:10px"></p>
@@ -212,7 +217,7 @@
       <p class="hint">You're using Pranava <b>without an account</b> — sessions, sounds and your
       progress report stay private on this device, and everything works offline.
       Cloud accounts (sign in to sync history across devices) are on the roadmap
-      and will always be optional.</p>
+      and will always be optional.<br><a href="privacy.html" style="color:var(--sky)">Privacy policy</a></p>
     </div>
     <div class="card">
       <h3>Install on your phone</h3>
@@ -287,6 +292,7 @@
 <script src="storage.js"></script>
 <script src="audio.js"></script>
 <script src="presets.js"></script>
+<script src="healing.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

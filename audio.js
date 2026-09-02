@@ -256,6 +256,41 @@ const Aud = {
       }
     }
   },
+  /* healing frequencies — pure Solfeggio tones & binaural beats, all sine
+     (no harmonics = no harsh off-tones), gently faded and breathing */
+  startHealing(spec) {
+    this.resume();
+    this.stopAmbient();
+    this.ambId = 'heal:' + spec.id;
+    const t = this.ctx.currentTime;
+    const keep = n => { this.ambNodes.push(n); return n; };
+    const bus = keep(this.ctx.createGain());
+    bus.gain.setValueAtTime(0, t);
+    bus.gain.linearRampToValueAtTime(0.5, t + 3);   // slow fade-in, never a click
+    bus.connect(this.ambGain);
+    const sine = (freq, gain, pan) => {
+      const o = keep(this.ctx.createOscillator());
+      o.type = 'sine'; o.frequency.value = freq;
+      const g = keep(this.ctx.createGain()); g.gain.value = gain;
+      o.connect(g);
+      if (pan !== undefined && this.ctx.createStereoPanner) {
+        const p = keep(this.ctx.createStereoPanner()); p.pan.value = pan;
+        g.connect(p); p.connect(bus);
+      } else g.connect(bus);
+      o.start(t);
+    };
+    if (spec.group === 'binaural') {
+      sine(spec.carrier, 0.5, -1);              // left ear
+      sine(spec.carrier + spec.beat, 0.5, 1);   // right ear — difference = the beat
+      sine(spec.carrier / 2, 0.22);             // soft centered sub for warmth
+    } else {
+      sine(spec.f, 0.5);                         // the healing tone
+      sine(spec.f / 2, 0.24);                    // octave below for body
+      sine(spec.f * 1.0015, 0.28);               // faint shimmer beat, alive not flat
+      keep(this.lfo(0.08, 0.1, bus.gain));       // slow breathing
+    }
+  },
+
   stopAmbient() {
     this.ambTimers.forEach(clearInterval); this.ambTimers = [];
     this.ambNodes.forEach(n => { try { n.stop && n.stop(); n.disconnect && n.disconnect(); } catch (e) {} });
