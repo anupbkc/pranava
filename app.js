@@ -873,6 +873,13 @@ async function loadSoundLib() {
   refreshSelects(); renderLibrary();
 }
 
+/* show the install hint only in a browser tab — hidden once installed / in the store app */
+(() => {
+  const installed = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+  const card = $('#install-card');
+  if (card && !installed) card.hidden = false;
+})();
+
 /* ——— boot ——— */
 refreshSelects();
 loadImported();

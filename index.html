@@ -171,58 +171,49 @@
   <!-- ————— LIBRARY ————— -->
   <section id="view-library" class="view">
     <div class="card">
-      <h3>Bells & bowls <small>· tuned to 432 Hz · earth frequency</small></h3>
+      <h3>Bells & bowls <small>· tuned to 432 Hz</small></h3>
       <div class="sound-grid" id="bell-grid"></div>
     </div>
     <div class="card">
       <h3>Ambience</h3>
       <div class="sound-grid" id="amb-grid"></div>
       <label class="row" style="margin-top:8px">
-        <span>Ambience volume</span>
+        <span>Volume</span>
         <input type="range" id="rng-lib" min="0" max="1" step="0.05">
         <em class="pct" id="lib-pct"></em>
       </label>
     </div>
     <div class="card">
-      <h3>Healing frequencies <small>· synthesized · Solfeggio & binaural</small></h3>
+      <h3>Healing frequencies <small>· Solfeggio & binaural</small></h3>
       <div class="sound-grid" id="heal-grid"></div>
-      <p class="hint" style="margin-top:10px">Solfeggio tones play on any speaker. Binaural beats (Delta · Theta · Alpha) need <b>headphones</b> to take effect — the brainwave pulse forms from the difference between your two ears. These are relaxation and meditation aids, not medical treatment.</p>
+      <p class="hint" style="margin-top:10px">Solfeggio tones play through any speaker. Binaural beats — Delta, Theta and Alpha — are best experienced with headphones. For relaxation and focus; not a medical treatment.</p>
     </div>
     <div class="card">
-      <h3>Sound library <small>· free & license-clean</small></h3>
+      <h3>Nature & music</h3>
       <div class="sound-grid" id="lib-grid"></div>
-      <p class="hint" id="lib-credits" style="margin-top:10px"></p>
+      <p class="hint" id="lib-credits" style="margin-top:10px;opacity:.65"></p>
     </div>
     <div class="card">
       <h3>Your sounds</h3>
-      <p class="hint">Import your own bells or ambient loops (mp3, wav, m4a…). Stored privately on this device.
-      On iPhone, pick files from the Files app or your recordings.</p>
+      <p class="hint">Add your own bells or ambient loops. Your files stay private on this device.</p>
       <button class="ghost file-btn" id="btn-import">＋ Import sound</button>
       <input type="file" id="file-import" accept="audio/*,.mp3,.m4a,.wav,.aac,.ogg,.flac" multiple style="display:none">
       <div id="imported-list"></div>
     </div>
     <div class="card">
-      <h3>Add guided voices</h3>
-      <p class="hint">Guided sessions live in your GitHub repo — that's Pranava's backend.
-      Record a voice track (e.g. Voice Memos), upload it to the <b>guided/</b> folder at
-      github.com/anupbkc/pranava, add one entry in <b>guided.json</b>, and it appears here
-      for every device. Each session can offer several voices (male, female, your own).</p>
-    </div>
-    <div class="card">
-      <h3>Practice report</h3>
+      <h3>Your practice</h3>
       <div id="stats"></div>
     </div>
-    <div class="card">
-      <h3>Account</h3>
-      <p class="hint">You're using Pranava <b>without an account</b> — sessions, sounds and your
-      progress report stay private on this device, and everything works offline.
-      Cloud accounts (sign in to sync history across devices) are on the roadmap
-      and will always be optional.<br><a href="privacy.html" style="color:var(--sky)">Privacy policy</a></p>
+    <div class="card" id="install-card" hidden>
+      <h3>Add to your home screen</h3>
+      <p class="hint">iPhone — Safari → Share → <b>Add to Home Screen</b>.<br>
+      Android — Chrome menu → <b>Install app</b>.<br>Pranava then opens full-screen and works offline.</p>
     </div>
     <div class="card">
-      <h3>Install on your phone</h3>
-      <p class="hint">iPhone: open in Safari → Share → <b>Add to Home Screen</b>.<br>
-      Android: Chrome menu → <b>Install app</b>.<br>Pranava then works fully offline, like a native app.</p>
+      <h3>Privacy</h3>
+      <p class="hint">Pranava works without an account. Your sessions, sounds and progress stay
+      private on this device, and everything works offline.
+      <a href="privacy.html" style="color:var(--sky)">Read our privacy policy</a>.</p>
     </div>
   </section>
 
