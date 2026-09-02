@@ -10,7 +10,7 @@ const store = {
 const cfg = Object.assign({
   dur: 15, start: 'bowl', end: 'gong', intEvery: 0, intSound: 'bell',
   amb: 'none', ambVol: 0.5, bDur: 5, preset: 'anulom', voice: true, cues: true,
-  endMode: '3',
+  endMode: '3', cueVol: 1,
 }, store.get('pranava.cfg', {}));
 const saveCfg = () => store.set('pranava.cfg', cfg);
 
@@ -601,9 +601,12 @@ function beginSession(mode, gSess, gUrl) {
   setProg(0);
   grabWakeLock(); showSession();
   $('#mini-name').textContent = mode === 'guided' ? gSess.name : mode === 'breathe' ? findPreset(cfg.preset).name : 'Meditation';
-  $('#mix-voice-row').style.display = mode === 'guided' && gUrl ? '' : 'none';
-  $('#rng-voice').value = 1;
-  const vp = $('#voice-pct'); if (vp) vp.textContent = '100%';
+  // show the Voice slider for guided audio and for breathwork voice cues
+  const showVoice = (mode === 'guided' && gUrl) || (mode === 'breathe' && cfg.voice);
+  $('#mix-voice-row').style.display = showVoice ? '' : 'none';
+  const vVal = mode === 'breathe' ? cfg.cueVol : 1;
+  $('#rng-voice').value = vVal;
+  const vp = $('#voice-pct'); if (vp) vp.textContent = Math.round(vVal * 100) + '%';
   setAmbVolume(cfg.ambVol);
   if (mode === 'meditate') {
     S.totalMs = cfg.dur * 60000;
@@ -696,6 +699,18 @@ function tick() {
   }
 }
 
+/* recorded deep-voice breath cues (reliable on iOS, unlike device speech).
+   Files exist for the built-in phrases; custom patterns fall back to speech. */
+const CUE_SLUGS = new Set(['inhale-left-nostril', 'exhale-right-nostril', 'inhale-right-nostril',
+  'exhale-left-nostril', 'hold', 'inhale', 'exhale', 'inhale-through-the-nose', 'exhale-ocean-sound',
+  'exhale-hum', 'pump-sharp-exhales', 'inhale-deep', 'exhale-slowly', 'rest-natural-breath']);
+const cueSlug = label => label.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+function speakPhase(label) {
+  const slug = cueSlug(label);
+  if (CUE_SLUGS.has(slug)) Aud.playUrl('cues/' + slug + '.m4a', cfg.cueVol * cfg.cueVol); // deep recorded voice
+  else Aud.voice(label.replace(/—/g, ','), cfg.voiceName);                                // fallback: device speech
+}
+
 function nextPhase() {
   S.pi = (S.pi + 1) % S.cycle.length;
   const p = S.cycle[S.pi];
@@ -709,7 +724,7 @@ function nextPhase() {
   else if (p.a === 'out' || p.a === 'hum') setFlower(0.84, p.t);
   else if (p.a === 'rest') setFlower(1.0, 2);
   if (cfg.cues) Aud.cue(p.a, p.t);
-  if (cfg.voice) Aud.voice(p.l.replace(/—/g, ','), cfg.voiceName);
+  if (cfg.voice) speakPhase(p.l);
 }
 
 $('#btn-pause').onclick = () => {
@@ -755,7 +770,8 @@ $('#mini-end').onclick = e => { e.stopPropagation(); endSession(false); };
 /* live mix — voice & ambience volume during a session */
 $('#rng-voice').oninput = e => {
   const v = +e.target.value;
-  if (guidedAudio) guidedAudio.volume = v * v;
+  if (guidedAudio) guidedAudio.volume = v * v;   // recorded guided narration
+  cfg.cueVol = v; saveCfg();                      // recorded breath cues (next phase)
   const p = $('#voice-pct'); if (p) p.textContent = Math.round(v * 100) + '%';
 };
 $('#rng-bg').oninput = e => setAmbVolume(+e.target.value, e.target);
