@@ -76,14 +76,14 @@
     font-size:.82rem;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;font-family:var(--sans);transition:.2s}
   .ghost:active{transform:scale(.98)}
 
-  /* sounds trigger — sits above Begin as the first step; faintly filled so it reads softer than Begin */
-  .soundsbtn{width:100%;background:rgba(233,220,198,.12);border:1px solid rgba(233,220,198,.28);color:var(--beige);
-    padding:14px;border-radius:999px;font-size:.72rem;letter-spacing:.3em;text-indent:.3em;text-transform:uppercase;
-    cursor:pointer;font-family:var(--sans);font-weight:600;
-    display:inline-flex;align-items:center;justify-content:center;gap:10px;transition:.2s}
+  /* sounds trigger — sits above Begin as the first step; same gold as Begin but a shorter pill,
+     so Begin reads as the bigger step that follows */
+  .soundsbtn{background:linear-gradient(135deg,#f0e5cf,#d5bf97);border:none;color:var(--bg0);
+    padding:11px 24px;border-radius:999px;font-size:.68rem;letter-spacing:.26em;text-indent:.26em;text-transform:uppercase;
+    cursor:pointer;font-family:var(--sans);font-weight:600;box-shadow:0 6px 22px rgba(233,220,198,.18);
+    display:inline-flex;align-items:center;justify-content:center;gap:9px;transition:transform .2s}
   .soundsbtn:active{transform:scale(.98)}
-  .soundsbtn:hover{background:rgba(233,220,198,.18)}
-  .soundsbtn .dot{font-size:1rem;line-height:1;color:var(--beige);text-indent:0}
+  .soundsbtn .dot{font-size:.95rem;line-height:1;text-indent:0}
 
   /* slide-up sounds sheet (bottom sheet on phone, centered card on laptop) */
   .sheet{position:fixed;inset:0;z-index:30;display:flex;align-items:flex-end;justify-content:center;
