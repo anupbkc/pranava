@@ -79,6 +79,11 @@
   /* options */
   .opts{width:100%;max-width:360px;background:var(--card);border:1px solid var(--line);border-radius:20px;
     padding:6px 16px;margin-top:16px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+  .opts summary{cursor:pointer;list-style:none;color:var(--beige-dim);font-size:.68rem;letter-spacing:.26em;
+    text-transform:uppercase;padding:8px 2px;outline:none}
+  .opts summary::-webkit-details-marker{display:none}
+  .opts summary::after{content:"⌄";float:right;opacity:.6}
+  .opts[open] summary::after{content:"⌃"}
   .row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 0;font-size:.86rem}
   .row+.row{border-top:1px solid var(--line)}
   .row span{color:var(--ink-dim)}
@@ -151,27 +156,23 @@
     </div>
   </div>
 
-  <div class="opts">
+  <details class="opts" id="opts" open>
+    <summary>Sounds</summary>
     <label class="row"><span>Sound</span><input type="checkbox" class="switch" id="sound" checked></label>
-    <label class="row"><span>Bell</span>
-      <select id="bell">
+    <label class="row"><span>Opening sound</span>
+      <select id="open">
         <option value="bowl">Singing Bowl</option><option value="gong">Gong</option>
-        <option value="tingsha">Tingsha</option><option value="bell">Temple Bell</option>
+        <option value="tingsha">Tingsha</option><option value="bell">Temple Bell</option><option value="none">None</option>
       </select>
     </label>
-    <label class="row"><span>Background</span>
-      <select id="amb">
-        <option value="none">Silence</option>
-        <option value="rain">Rain</option>
-        <option value="ocean">Ocean Waves</option>
-        <option value="forest">Forest Birdsong</option>
-        <option value="stream">Mountain Stream</option>
-        <option value="storm">Sea Storm</option>
-        <option value="soundbath">Sound Bath</option>
+    <label class="row"><span>Closing sound</span>
+      <select id="close">
+        <option value="gong">Gong</option><option value="bowl">Singing Bowl</option>
+        <option value="tingsha">Tingsha</option><option value="bell">Temple Bell</option><option value="none">None</option>
       </select>
     </label>
-    <label class="row"><span>Background volume</span>
-      <input type="range" id="vol" min="0" max="100" value="55" aria-label="Background volume">
+    <label class="row"><span>Bell volume</span>
+      <input type="range" id="bellvol" min="0" max="100" value="70" aria-label="Bell volume">
     </label>
     <label class="row"><span>Interval bell</span>
       <select id="interval">
@@ -185,7 +186,18 @@
         <option value="bowl">Singing Bowl</option><option value="gong">Gong</option>
       </select>
     </label>
-  </div>
+    <label class="row"><span>Background</span>
+      <select id="amb">
+        <option value="none">Silence</option><option value="rain">Rain</option>
+        <option value="ocean">Ocean Waves</option><option value="forest">Forest Birdsong</option>
+        <option value="stream">Mountain Stream</option><option value="storm">Sea Storm</option>
+        <option value="soundbath">Sound Bath</option>
+      </select>
+    </label>
+    <label class="row"><span>Background volume</span>
+      <input type="range" id="vol" min="0" max="100" value="55" aria-label="Background volume">
+    </label>
+  </details>
 
   <footer>
     <svg viewBox="0 0 600 600" aria-hidden="true">
@@ -201,7 +213,7 @@
       <ellipse cx="300" cy="271" rx="78" ry="30" fill="none" stroke="#C09040" stroke-width="3.5"/><ellipse cx="300" cy="271" rx="78" ry="30" fill="none" stroke="#C09040" stroke-width="3.5" transform="rotate(60 300 271)"/><ellipse cx="300" cy="271" rx="78" ry="30" fill="none" stroke="#C09040" stroke-width="3.5" transform="rotate(-60 300 271)"/>
       <circle cx="300" cy="271" r="18" fill="url(#sn)"/><circle cx="378" cy="271" r="9" fill="url(#pl)"/><circle cx="261" cy="203" r="7" fill="url(#pl)"/><circle cx="339" cy="203" r="5" fill="url(#pl)"/>
     </svg>
-    <span>Powered by <b>GIRI</b><br>Gayatri Interdisciplinary Research Institute</span>
+    <span>by Kathmandu Meditates™<br>Powered by <b>GIRI</b></span>
   </footer>
 </div>
 
@@ -223,8 +235,9 @@
   var C=2*Math.PI*88;
   var prog=$('#prog'), timeEl=$('#time'), stateEl=$('#state'), dial=$('#dial');
   var beginBtn=$('#begin'), runRow=$('#run-row'), pauseBtn=$('#pause'), resetBtn=$('#reset');
-  var soundToggle=$('#sound'), intervalSel=$('#interval'), bellSel=$('#bell'), intSoundSel=$('#intsound'),
-      ambSel=$('#amb'), volSlider=$('#vol');
+  var soundToggle=$('#sound'), intervalSel=$('#interval'), intSoundSel=$('#intsound'),
+      openSel=$('#open'), closeSel=$('#close'), ambSel=$('#amb'),
+      volSlider=$('#vol'), bellVolSlider=$('#bellvol');
 
   var durationMin=15, totalSec=900, remaining=900, running=false, paused=false, tick=null, endAt=0, lastBell=0;
 
@@ -235,10 +248,11 @@
   var AC=null;
   function ctx(){ if(!AC){ try{ AC=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ return null; } }
     if(AC && AC.state==='suspended'){ try{AC.resume();}catch(e){} } return AC; }
+  function bellVol(){ var v=(+bellVolSlider.value||0)/100; return v*v; }   /* perceptual (squared) curve */
   function strike(parts, peak){
     if(!soundToggle.checked) return;
     var c=ctx(); if(!c) return;
-    var now=c.currentTime, master=c.createGain(); master.gain.value=peak; master.connect(c.destination);
+    var now=c.currentTime, master=c.createGain(); master.gain.value=peak*bellVol(); master.connect(c.destination);
     parts.forEach(function(p){ var f=p[0],g=p[1],d=p[2];
       var o=c.createOscillator(); o.type='sine'; o.frequency.value=f;
       var ga=c.createGain(); ga.gain.setValueAtTime(0.0001,now); ga.gain.linearRampToValueAtTime(g,now+0.02);
@@ -252,8 +266,8 @@
     tingsha:{p:[[864,0.7,1.6],[1297,0.25,1.2]],g:0.4},                 /* bright tingsha chime */
     bell:{p:[[528,1,3],[1056,0.3,2.4],[1589,0.15,1.8],[2218,0.08,1.2]],g:0.45} /* clear temple bell */
   };
-  function play(name){ var v=voices[name]||voices.bowl; strike(v.p,v.g); }
-  function closing(){ play(bellSel.value); setTimeout(function(){ play(bellSel.value); },2300); } /* two gentle swells so a low volume is never missed */
+  function play(name){ if(!name||name==='none') return; var v=voices[name]||voices.bowl; strike(v.p,v.g); }
+  function closing(){ play(closeSel.value); setTimeout(function(){ play(closeSel.value); },2300); } /* two gentle swells so a low volume is never missed */
 
   /* ——— background ambience: real CC0 recordings from /sounds, live volume ——— */
   var AMB={ rain:'sounds/rain.mp3', ocean:'sounds/beach.mp3', forest:'sounds/birds.mp3',
@@ -320,7 +334,7 @@
     beginBtn.hidden=true; runRow.hidden=false; pauseBtn.textContent='Pause';
     stateEl.textContent='Breathe'; dial.classList.add('breathe');
     timeEl.setAttribute('aria-live','off');
-    ctx(); play(bellSel.value); applyAmb(); lock();
+    ctx(); play(openSel.value); applyAmb(); lock();
     tick=setInterval(loop,250); loop();
   }
   function pause(){
@@ -344,11 +358,21 @@
   }
 
   beginBtn.onclick=begin; pauseBtn.onclick=pause; resetBtn.onclick=reset;
-  bellSel.onchange=function(){ ctx(); play(bellSel.value); };       /* preview the chosen bell */
+  openSel.onchange=function(){ ctx(); play(openSel.value); };       /* preview on pick */
+  closeSel.onchange=function(){ ctx(); play(closeSel.value); };
   intSoundSel.onchange=function(){ ctx(); play(intSoundSel.value); };
+  bellVolSlider.onchange=function(){ ctx(); play(openSel.value); }; /* preview bell at the new volume (on release) */
   ambSel.onchange=function(){ ctx(); applyAmb(); };                 /* play background now so volume can be set, continues into session */
-  volSlider.oninput=setVol;                                         /* live volume — in setup and during the session */
+  volSlider.oninput=setVol;                                         /* live background volume — setup and during the session */
   soundToggle.onchange=applyAmb;                                    /* Sound on/off mutes background + bells live, mid-session too */
+
+  /* remember the viewer's choices between visits (per-browser) */
+  var CTRLS=[soundToggle,openSel,closeSel,bellVolSlider,intervalSel,intSoundSel,ambSel,volSlider];
+  function saveCfg(){ try{ var o={}; CTRLS.forEach(function(el){ o[el.id]=el.type==='checkbox'?el.checked:el.value; });
+    localStorage.setItem('pranava.km',JSON.stringify(o)); }catch(e){} }
+  (function loadCfg(){ try{ var o=JSON.parse(localStorage.getItem('pranava.km')||'{}');
+    CTRLS.forEach(function(el){ if(o[el.id]!==undefined){ if(el.type==='checkbox') el.checked=o[el.id]; else el.value=o[el.id]; } }); }catch(e){} })();
+  CTRLS.forEach(function(el){ el.addEventListener('change',saveCfg); });
   document.addEventListener('visibilitychange',function(){ if(!document.hidden && running && !paused) loop(); });
 
   renderChips(); setDuration(15);
