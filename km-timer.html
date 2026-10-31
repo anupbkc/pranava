@@ -84,6 +84,7 @@
   .row span{color:var(--ink-dim)}
   select{background:rgba(20,16,42,.55);color:var(--ink);border:1px solid var(--line);border-radius:12px;
     padding:7px 10px;font-size:.82rem;font-family:var(--sans)}
+  input[type=range]{accent-color:var(--violet);width:52%;max-width:200px}
   .switch{appearance:none;width:42px;height:24px;border-radius:999px;background:rgba(185,167,230,.18);
     border:1px solid var(--line);position:relative;cursor:pointer;transition:.2s;flex:none}
   .switch::after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;
@@ -158,6 +159,20 @@
         <option value="tingsha">Tingsha</option><option value="bell">Temple Bell</option>
       </select>
     </label>
+    <label class="row"><span>Background</span>
+      <select id="amb">
+        <option value="none">Silence</option>
+        <option value="rain">Rain</option>
+        <option value="ocean">Ocean Waves</option>
+        <option value="forest">Forest Birdsong</option>
+        <option value="stream">Mountain Stream</option>
+        <option value="storm">Sea Storm</option>
+        <option value="soundbath">Sound Bath</option>
+      </select>
+    </label>
+    <label class="row"><span>Background volume</span>
+      <input type="range" id="vol" min="0" max="100" value="55" aria-label="Background volume">
+    </label>
     <label class="row"><span>Interval bell</span>
       <select id="interval">
         <option value="0">Off</option><option value="5">Every 5 min</option>
@@ -208,7 +223,8 @@
   var C=2*Math.PI*88;
   var prog=$('#prog'), timeEl=$('#time'), stateEl=$('#state'), dial=$('#dial');
   var beginBtn=$('#begin'), runRow=$('#run-row'), pauseBtn=$('#pause'), resetBtn=$('#reset');
-  var soundToggle=$('#sound'), intervalSel=$('#interval'), bellSel=$('#bell'), intSoundSel=$('#intsound');
+  var soundToggle=$('#sound'), intervalSel=$('#interval'), bellSel=$('#bell'), intSoundSel=$('#intsound'),
+      ambSel=$('#amb'), volSlider=$('#vol');
 
   var durationMin=15, totalSec=900, remaining=900, running=false, paused=false, tick=null, endAt=0, lastBell=0;
 
@@ -238,6 +254,22 @@
   };
   function play(name){ var v=voices[name]||voices.bowl; strike(v.p,v.g); }
   function closing(){ play(bellSel.value); setTimeout(function(){ play(bellSel.value); },2300); } /* two gentle swells so a low volume is never missed */
+
+  /* ——— background ambience: real CC0 recordings from /sounds, live volume ——— */
+  var AMB={ rain:'sounds/rain.mp3', ocean:'sounds/beach.mp3', forest:'sounds/birds.mp3',
+            stream:'sounds/stream.mp3', storm:'sounds/storm.mp3', soundbath:'sounds/soundbath.mp3' };
+  var ambAudio=new Audio(); ambAudio.loop=true; ambAudio.preload='none';
+  function volGain(){ var v=(+volSlider.value||0)/100; return Math.min(1,v*v); } /* perceptual (squared) curve */
+  /* start / switch / stop the background by current selection + the Sound toggle */
+  function applyAmb(){
+    var name=ambSel.value, file=AMB[name];
+    if(!file || !soundToggle.checked){ ambAudio.pause(); return; }
+    if(ambAudio.getAttribute('data-id')!==name){ ambAudio.src=file; ambAudio.setAttribute('data-id',name); }
+    ambAudio.volume=volGain();
+    var p=ambAudio.play(); if(p && p.catch) p.catch(function(){});
+  }
+  function stopAmb(){ ambAudio.pause(); try{ ambAudio.currentTime=0; }catch(e){} }
+  function setVol(){ ambAudio.volume=volGain(); }
 
   /* ——— wake lock while running ——— */
   var wake=null;
@@ -288,18 +320,18 @@
     beginBtn.hidden=true; runRow.hidden=false; pauseBtn.textContent='Pause';
     stateEl.textContent='Breathe'; dial.classList.add('breathe');
     timeEl.setAttribute('aria-live','off');
-    ctx(); play(bellSel.value); lock();
+    ctx(); play(bellSel.value); applyAmb(); lock();
     tick=setInterval(loop,250); loop();
   }
   function pause(){
     if(!running) return;
     if(!paused){ paused=true; clearInterval(tick); tick=null; stateEl.textContent='Paused';
-      dial.classList.remove('breathe'); pauseBtn.textContent='Resume'; unlock(); }
+      dial.classList.remove('breathe'); pauseBtn.textContent='Resume'; ambAudio.pause(); unlock(); }
     else { paused=false; endAt=Date.now()+remaining*1000; stateEl.textContent='Breathe';
-      dial.classList.add('breathe'); pauseBtn.textContent='Pause'; lock(); tick=setInterval(loop,250); loop(); }
+      dial.classList.add('breathe'); pauseBtn.textContent='Pause'; applyAmb(); lock(); tick=setInterval(loop,250); loop(); }
   }
   function stop(){
-    running=false; paused=false; if(tick){clearInterval(tick);tick=null;} unlock();
+    running=false; paused=false; if(tick){clearInterval(tick);tick=null;} stopAmb(); unlock();
     dial.classList.remove('breathe'); beginBtn.hidden=false; runRow.hidden=true;
   }
   function reset(){
@@ -314,6 +346,9 @@
   beginBtn.onclick=begin; pauseBtn.onclick=pause; resetBtn.onclick=reset;
   bellSel.onchange=function(){ ctx(); play(bellSel.value); };       /* preview the chosen bell */
   intSoundSel.onchange=function(){ ctx(); play(intSoundSel.value); };
+  ambSel.onchange=function(){ ctx(); applyAmb(); };                 /* play background now so volume can be set, continues into session */
+  volSlider.oninput=setVol;                                         /* live volume — in setup and during the session */
+  soundToggle.onchange=applyAmb;                                    /* Sound on/off mutes background + bells live, mid-session too */
   document.addEventListener('visibilitychange',function(){ if(!document.hidden && running && !paused) loop(); });
 
   renderChips(); setDuration(15);
