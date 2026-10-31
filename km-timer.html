@@ -76,14 +76,40 @@
     font-size:.82rem;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;font-family:var(--sans);transition:.2s}
   .ghost:active{transform:scale(.98)}
 
-  /* options */
-  .opts{width:100%;max-width:360px;background:var(--card);border:1px solid var(--line);border-radius:20px;
-    padding:6px 16px;margin-top:16px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
-  .opts summary{cursor:pointer;list-style:none;color:var(--beige-dim);font-size:.68rem;letter-spacing:.26em;
-    text-transform:uppercase;padding:8px 2px;outline:none}
-  .opts summary::-webkit-details-marker{display:none}
-  .opts summary::after{content:"⌄";float:right;opacity:.6}
-  .opts[open] summary::after{content:"⌃"}
+  /* sounds trigger — keeps the main screen to one window */
+  .soundsbtn{margin-top:4px;background:none;border:1px solid var(--line);color:var(--beige-dim);
+    padding:10px 20px;border-radius:999px;font-size:.64rem;letter-spacing:.26em;text-transform:uppercase;
+    cursor:pointer;font-family:var(--sans);display:inline-flex;align-items:center;gap:9px;transition:.2s}
+  .soundsbtn:active{transform:scale(.98)}
+  .soundsbtn .dot{font-size:.9rem;line-height:1;color:var(--beige)}
+
+  /* slide-up sounds sheet (bottom sheet on phone, centered card on laptop) */
+  .sheet{position:fixed;inset:0;z-index:30;display:flex;align-items:flex-end;justify-content:center;
+    background:rgba(10,7,24,.6);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);
+    opacity:0;pointer-events:none;transition:opacity .25s}
+  .sheet.show{opacity:1;pointer-events:auto}
+  .panel{width:100%;max-width:440px;max-height:90vh;overflow-y:auto;
+    background:linear-gradient(180deg,var(--bg2),var(--bg1));border:1px solid var(--line);border-bottom:none;
+    border-radius:26px 26px 0 0;
+    padding:6px 20px calc(22px + env(safe-area-inset-bottom,0px));
+    transform:translateY(100%);transition:transform .3s cubic-bezier(.3,0,.2,1);
+    box-shadow:0 -24px 60px rgba(0,0,0,.45)}
+  .sheet.show .panel{transform:translateY(0)}
+  .grab{width:40px;height:4px;border-radius:999px;background:var(--line);margin:8px auto 2px}
+  .panel h2{font-family:var(--serif);font-weight:400;font-size:1rem;letter-spacing:.24em;text-transform:uppercase;
+    color:var(--beige);text-align:center;margin:4px 0 2px}
+  .row small{display:block;font-size:.68em;letter-spacing:0;text-transform:none;opacity:.55;margin-top:2px}
+  .donebtn{width:100%;margin-top:16px;padding:14px;font-size:.78rem;letter-spacing:.4em;text-indent:.4em;
+    text-transform:uppercase;color:var(--bg0);background:linear-gradient(135deg,#f0e5cf,#d5bf97);border:none;
+    border-radius:999px;cursor:pointer;font-weight:600;font-family:var(--sans)}
+  .donebtn:active{transform:scale(.98)}
+  @media(min-width:520px){
+    .sheet{align-items:center}
+    .panel{border-radius:26px;border-bottom:1px solid var(--line);padding-bottom:22px;transform:translateY(18px);opacity:0;
+      transition:transform .3s cubic-bezier(.3,0,.2,1),opacity .25s}
+    .sheet.show .panel{transform:translateY(0);opacity:1}
+    .grab{display:none}
+  }
   .row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 0;font-size:.86rem}
   .row+.row{border-top:1px solid var(--line)}
   .row span{color:var(--ink-dim)}
@@ -154,50 +180,49 @@
       <button class="ghost" id="pause">Pause</button>
       <button class="ghost" id="reset">End</button>
     </div>
+    <button class="soundsbtn" id="soundsbtn" aria-haspopup="dialog"><span class="dot">◎</span>Sounds</button>
   </div>
 
-  <details class="opts" id="opts" open>
-    <summary>Sounds</summary>
-    <label class="row"><span>Sound</span><input type="checkbox" class="switch" id="sound" checked></label>
-    <label class="row"><span>Opening sound</span>
-      <select id="open">
-        <option value="bowl">Singing Bowl</option><option value="gong">Gong</option>
-        <option value="tingsha">Tingsha</option><option value="bell">Temple Bell</option><option value="none">None</option>
-      </select>
-    </label>
-    <label class="row"><span>Closing sound</span>
-      <select id="close">
-        <option value="gong">Gong</option><option value="bowl">Singing Bowl</option>
-        <option value="tingsha">Tingsha</option><option value="bell">Temple Bell</option><option value="none">None</option>
-      </select>
-    </label>
-    <label class="row"><span>Bell volume</span>
-      <input type="range" id="bellvol" min="0" max="100" value="70" aria-label="Bell volume">
-    </label>
-    <label class="row"><span>Interval bell</span>
-      <select id="interval">
-        <option value="0">Off</option><option value="5">Every 5 min</option>
-        <option value="10">Every 10 min</option><option value="15">Every 15 min</option>
-      </select>
-    </label>
-    <label class="row"><span>Interval sound</span>
-      <select id="intsound">
-        <option value="tingsha">Tingsha</option><option value="bell">Temple Bell</option>
-        <option value="bowl">Singing Bowl</option><option value="gong">Gong</option>
-      </select>
-    </label>
-    <label class="row"><span>Background</span>
-      <select id="amb">
-        <option value="none">Silence</option><option value="rain">Rain</option>
-        <option value="ocean">Ocean Waves</option><option value="forest">Forest Birdsong</option>
-        <option value="stream">Mountain Stream</option><option value="storm">Sea Storm</option>
-        <option value="soundbath">Sound Bath</option>
-      </select>
-    </label>
-    <label class="row"><span>Background volume</span>
-      <input type="range" id="vol" min="0" max="100" value="55" aria-label="Background volume">
-    </label>
-  </details>
+  <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="Sound settings">
+    <div class="panel" id="panel">
+      <div class="grab"></div>
+      <h2>Sounds</h2>
+      <label class="row"><span>Sound</span><input type="checkbox" class="switch" id="sound" checked></label>
+      <label class="row"><span>Opening sound</span>
+        <select id="open">
+          <option value="bowl">Singing Bowl</option><option value="gong">Gong</option>
+          <option value="tingsha">Tingsha</option><option value="bell">Temple Bell</option><option value="none">None</option>
+        </select>
+      </label>
+      <label class="row"><span>Background</span>
+        <select id="amb">
+          <option value="none">Silence</option><option value="rain">Rain</option>
+          <option value="ocean">Ocean Waves</option><option value="forest">Forest Birdsong</option>
+          <option value="stream">Mountain Stream</option><option value="storm">Sea Storm</option>
+          <option value="soundbath">Sound Bath</option>
+        </select>
+      </label>
+      <label class="row"><span>Closing sound</span>
+        <select id="close">
+          <option value="gong">Gong</option><option value="bowl">Singing Bowl</option>
+          <option value="tingsha">Tingsha</option><option value="bell">Temple Bell</option><option value="none">None</option>
+        </select>
+      </label>
+      <label class="row"><span>Interval</span>
+        <select id="interval">
+          <option value="0">Off</option><option value="5">Every 5 min</option>
+          <option value="10">Every 10 min</option><option value="15">Every 15 min</option>
+        </select>
+      </label>
+      <label class="row"><span>Bell volume<small>opening · closing · interval</small></span>
+        <input type="range" id="bellvol" min="0" max="100" value="70" aria-label="Bell volume">
+      </label>
+      <label class="row"><span>Background volume</span>
+        <input type="range" id="vol" min="0" max="100" value="55" aria-label="Background volume">
+      </label>
+      <button class="donebtn" id="done">Done</button>
+    </div>
+  </div>
 
   <footer>
     <svg viewBox="0 0 600 600" aria-hidden="true">
@@ -235,9 +260,10 @@
   var C=2*Math.PI*88;
   var prog=$('#prog'), timeEl=$('#time'), stateEl=$('#state'), dial=$('#dial');
   var beginBtn=$('#begin'), runRow=$('#run-row'), pauseBtn=$('#pause'), resetBtn=$('#reset');
-  var soundToggle=$('#sound'), intervalSel=$('#interval'), intSoundSel=$('#intsound'),
+  var soundToggle=$('#sound'), intervalSel=$('#interval'),
       openSel=$('#open'), closeSel=$('#close'), ambSel=$('#amb'),
       volSlider=$('#vol'), bellVolSlider=$('#bellvol');
+  var sheet=$('#sheet'), soundsBtn=$('#soundsbtn'), doneBtn=$('#done'), panel=$('#panel');
 
   var durationMin=15, totalSec=900, remaining=900, running=false, paused=false, tick=null, endAt=0, lastBell=0;
 
@@ -326,7 +352,7 @@
     setProg((totalSec-remaining)/totalSec);
     var every=+intervalSel.value;
     if(every>0){ var elapsed=totalSec-remaining; var mark=Math.floor(elapsed/ (every*60));
-      if(mark>lastBell && remaining>2){ lastBell=mark; play(intSoundSel.value); } }
+      if(mark>lastBell && remaining>2){ lastBell=mark; play('tingsha'); } } /* interval chime fixed to tingsha */
   }
   function begin(){
     totalSec=remaining=durationMin*60; lastBell=0;
@@ -360,14 +386,22 @@
   beginBtn.onclick=begin; pauseBtn.onclick=pause; resetBtn.onclick=reset;
   openSel.onchange=function(){ ctx(); play(openSel.value); };       /* preview on pick */
   closeSel.onchange=function(){ ctx(); play(closeSel.value); };
-  intSoundSel.onchange=function(){ ctx(); play(intSoundSel.value); };
   bellVolSlider.onchange=function(){ ctx(); play(openSel.value); }; /* preview bell at the new volume (on release) */
   ambSel.onchange=function(){ ctx(); applyAmb(); };                 /* play background now so volume can be set, continues into session */
   volSlider.oninput=setVol;                                         /* live background volume — setup and during the session */
   soundToggle.onchange=applyAmb;                                    /* Sound on/off mutes background + bells live, mid-session too */
 
+  /* sounds sheet open / close (slides over the timer so the main screen never scrolls) */
+  function openSheet(){ ctx(); sheet.classList.add('show'); }
+  function closeSheet(){ sheet.classList.remove('show'); }
+  soundsBtn.onclick=openSheet;
+  doneBtn.onclick=closeSheet;
+  sheet.addEventListener('click',function(e){ if(e.target===sheet) closeSheet(); }); /* tap the dim backdrop */
+  panel.addEventListener('click',function(e){ e.stopPropagation(); });
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape') closeSheet(); });
+
   /* remember the viewer's choices between visits (per-browser) */
-  var CTRLS=[soundToggle,openSel,closeSel,bellVolSlider,intervalSel,intSoundSel,ambSel,volSlider];
+  var CTRLS=[soundToggle,openSel,closeSel,bellVolSlider,intervalSel,ambSel,volSlider];
   function saveCfg(){ try{ var o={}; CTRLS.forEach(function(el){ o[el.id]=el.type==='checkbox'?el.checked:el.value; });
     localStorage.setItem('pranava.km',JSON.stringify(o)); }catch(e){} }
   (function loadCfg(){ try{ var o=JSON.parse(localStorage.getItem('pranava.km')||'{}');
