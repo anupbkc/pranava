@@ -62,6 +62,9 @@
   .chip small{font-size:.68em;opacity:.8;margin-left:2px}
   .chip.active{color:var(--bg0);background:var(--beige);border-color:var(--beige);font-weight:600;
     box-shadow:0 4px 18px rgba(233,220,198,.28)}
+  /* "Custom" reads as a clear action, not a faint icon */
+  .chip.custom{border-style:dashed;border-color:var(--violet-soft);color:var(--beige);letter-spacing:.04em}
+  .chip.custom.active{border-style:solid;color:var(--bg0)}
   .chip-input{width:74px;background:var(--bg1);border:1px solid var(--violet-soft);border-radius:999px;color:var(--beige);
     padding:8px 10px;font-size:.85rem;text-align:center;outline:none;font-family:var(--sans)}
 
@@ -345,9 +348,9 @@
       chipsEl.appendChild(b);
     });
     var custom=values.indexOf(durationMin)<0;
-    var pencil=document.createElement('button'); pencil.className='chip'+(custom?' active':'');
-    pencil.innerHTML=custom?(durationMin+'<small>min</small>'):'✎';
-    pencil.title='Custom minutes';
+    var pencil=document.createElement('button'); pencil.className='chip custom'+(custom?' active':'');
+    pencil.innerHTML=custom?(durationMin+'<small>min</small>'):'✎&nbsp;Custom';
+    pencil.title='Set your own minutes';
     pencil.onclick=function(){
       var inp=document.createElement('input'); inp.type='number'; inp.min='1'; inp.max='180'; inp.className='chip-input';
       inp.value=custom?durationMin:25; chipsEl.replaceChild(inp,pencil); inp.focus(); inp.select();
@@ -357,8 +360,10 @@
     chipsEl.appendChild(pencil);
   }
   function setDuration(v){
-    if(running) return;
-    durationMin=v; totalSec=remaining=v*60; timeEl.textContent=fmt(remaining); setProg(0); renderChips();
+    durationMin=v; totalSec=remaining=v*60; lastBell=0;
+    timeEl.textContent=fmt(remaining); setProg(0);
+    if(running && !paused){ endAt=Date.now()+remaining*1000; } /* change time live mid-session; a paused timer picks it up on resume */
+    renderChips();
   }
 
   /* ——— timer loop ——— */
