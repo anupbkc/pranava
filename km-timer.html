@@ -138,6 +138,11 @@
   footer svg{width:42px;height:42px}
   footer span{font-size:.6rem;letter-spacing:.16em;line-height:1.8;color:var(--ink-dim);text-transform:uppercase}
   footer b{color:var(--gold);font-weight:600}
+  footer a{text-decoration:none;color:var(--beige-dim);transition:color .2s}
+  footer a.emblem{line-height:0;display:inline-block}
+  footer span a:hover{color:var(--beige);text-decoration:underline}
+  footer a b{color:var(--gold)}
+  footer a:hover b{text-decoration:underline}
 
   button:focus-visible,select:focus-visible,.chip:focus-visible,.switch:focus-visible{outline:2px solid var(--sky);outline-offset:3px}
 
@@ -237,6 +242,7 @@
   </div>
 
   <footer>
+    <a class="emblem" href="https://girinstitute.org" target="_blank" rel="noopener" aria-label="Gayatri Interdisciplinary Research Institute">
     <svg viewBox="0 0 600 600" aria-hidden="true">
       <defs>
         <linearGradient id="fl" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#7A5018"/><stop offset="45%" stop-color="#D8A858"/><stop offset="55%" stop-color="#D8A858"/><stop offset="100%" stop-color="#7A5018"/></linearGradient>
@@ -249,8 +255,8 @@
       <rect x="158" y="383" width="284" height="12" rx="2" fill="url(#fl)"/><rect x="177" y="370" width="246" height="12" rx="2" fill="url(#fl)"/><rect x="194" y="357" width="212" height="12" rx="2" fill="url(#fl)"/>
       <ellipse cx="300" cy="271" rx="78" ry="30" fill="none" stroke="#C09040" stroke-width="3.5"/><ellipse cx="300" cy="271" rx="78" ry="30" fill="none" stroke="#C09040" stroke-width="3.5" transform="rotate(60 300 271)"/><ellipse cx="300" cy="271" rx="78" ry="30" fill="none" stroke="#C09040" stroke-width="3.5" transform="rotate(-60 300 271)"/>
       <circle cx="300" cy="271" r="18" fill="url(#sn)"/><circle cx="378" cy="271" r="9" fill="url(#pl)"/><circle cx="261" cy="203" r="7" fill="url(#pl)"/><circle cx="339" cy="203" r="5" fill="url(#pl)"/>
-    </svg>
-    <span>by Kathmandu Meditates™<br>Powered by <b>GIRI</b></span>
+    </svg></a>
+    <span>by <a href="https://www.kathmandumeditates.com" target="_blank" rel="noopener">Kathmandu Meditates™</a><br>Powered by <a href="https://girinstitute.org" target="_blank" rel="noopener"><b>GIRI</b></a></span>
   </footer>
 </div>
 
